@@ -88,6 +88,8 @@ private:
     double ll = 0.0;
 
     int alphak_new = 0;
+    bool missionStarted;
+    double old_speed = 0.0;
 
     bool robotStarted = true;
     unsigned short encl_new = 0;

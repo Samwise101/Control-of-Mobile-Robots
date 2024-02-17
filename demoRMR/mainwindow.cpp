@@ -98,7 +98,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
         forwardspeed = robot.robot_translational_reg(set_point.xn, set_point.yn);
         rotationspeed = robot.robot_rotational_reg(set_point.xn, set_point.yn, set_point.an);
 
-        if(forwardspeed == 0){
+        if(forwardspeed == 0.0){
             mission_started = false;
             ui->startMissionButton->setText("Start mission");
         }

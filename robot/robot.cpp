@@ -36,6 +36,7 @@ Robot::Robot(std::string ipaddressLaser,int laserportRobot, int laserportMe,std:
     robotCoord.a = 0;
     robotCoord.x = 0;
     robotCoord.y = 0;
+    missionStarted = false;
 }
 void Robot::robotprocess()
 {
@@ -346,22 +347,37 @@ double Robot::robot_translational_reg(double setX, double setY)
 {
     double treshold{0.1};
     double transSpeed{0.0};
+    double increment{2.5};
 
-    double ex = (setX - robotCoord.x)*1000; //[mm]
-    double ey = (setY - robotCoord.y)*1000; //[mm]
+    double ex = (setX - robotCoord.x)*1000.0; //[mm]
+    double ey = (setY - robotCoord.y)*1000.0; //[mm]
 
     double dist = sqrt(pow(ex, 2) + pow(ey,2)); //[mm]
 
     std::cout << "Dist= " << dist << " [mm]" << std::endl;
 
-    double P = 0.15;
+    double P = 0.2;
 
-    if(abs(dist)/1000 > treshold){
-        transSpeed = P*(dist);
-        std::cout << "Trans = " << transSpeed << std::endl;
-        if(transSpeed > 300){
-            transSpeed = 300;
+    transSpeed = P*(dist);
+
+    if(abs(dist)/1000.0 > treshold){
+        if(old_speed < transSpeed){
+            transSpeed = old_speed + increment;
         }
+        std::cout << "Trans = " << transSpeed << std::endl;
+        if(transSpeed > 300.0){
+            transSpeed = 300.0;
+        }
+        old_speed = transSpeed;
+    }
+    else{
+        if(old_speed > 0.0){
+            old_speed = old_speed - 2.5;
+            if(old_speed < 0.0)
+                old_speed = 0.0;
+        }
+        transSpeed = old_speed;
+        std::cout << "Trans = " << transSpeed << std::endl;
     }
 
     return transSpeed;
@@ -386,8 +402,6 @@ double Robot::robot_rotational_reg(double setX, double setY, double setRot)
     if(abs(eRot) > treshold){
         rotSpeed = P* eRot;
     }
-
-    std::cout << "Rot = " << rotSpeed << std::endl;
 
     return rotSpeed;
 }
