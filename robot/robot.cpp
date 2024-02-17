@@ -344,26 +344,25 @@ void Robot::robot_odometry(TKobukiData &Kobuki_data, bool useGyro)
 
 double Robot::robot_translational_reg(double setX, double setY)
 {
-    double treshold{0.2};
+    double treshold{0.1};
     double transSpeed{0.0};
 
-    double ex = (setX - robotCoord.x);
-    double ey = (setY - robotCoord.y);
+    double ex = (setX - robotCoord.x)*1000; //[mm]
+    double ey = (setY - robotCoord.y)*1000; //[mm]
 
-    double dist = sqrt(pow(ex, 2) + pow(ey,2));
+    double dist = sqrt(pow(ex, 2) + pow(ey,2)); //[mm]
 
-    std::cout << "Dist=" << dist << std::endl;
+    std::cout << "Dist= " << dist << " [mm]" << std::endl;
 
-    double P = 50;
+    double P = 0.15;
 
-    if(abs(dist) > treshold){
-        transSpeed = P*dist;
-        if(transSpeed*0.001 > 0.5){
-            transSpeed = 500;
+    if(abs(dist)/1000 > treshold){
+        transSpeed = P*(dist);
+        std::cout << "Trans = " << transSpeed << std::endl;
+        if(transSpeed > 300){
+            transSpeed = 300;
         }
     }
-
-    std::cout << "Trans = " << transSpeed << std::endl;
 
     return transSpeed;
 }

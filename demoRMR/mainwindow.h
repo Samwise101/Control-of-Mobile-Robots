@@ -88,12 +88,7 @@ private slots:
 
     void on_robotIP_returnPressed();
 
-
-    void on_xn_returnPressed();
-
-    void on_lineEdit_returnPressed();
-
-    void on_yn_returnPressed();
+    void on_startMissionButton_clicked();
 
 private:
      JOYINFO joystickInfo;
@@ -108,6 +103,8 @@ private:
      robot_connect_data robot_data;
      int datacounter;
      QTimer *timer;
+
+     bool mission_started;
 
      SetPoint set_point;
 

@@ -26,7 +26,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->xn->setText("0.0");
     ui->yn->setText("0.0");
-    ui->lineEdit->setText("0");
+
+    mission_started = false;
 
     datacounter=0;
 }
@@ -93,19 +94,27 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 
     robot.robot_odometry(robotdata, true);
 
-    forwardspeed = robot.robot_translational_reg(set_point.xn, set_point.yn);
-    rotationspeed = robot.robot_rotational_reg(set_point.xn, set_point.yn, set_point.an);
+    if(mission_started){
+        forwardspeed = robot.robot_translational_reg(set_point.xn, set_point.yn);
+        rotationspeed = robot.robot_rotational_reg(set_point.xn, set_point.yn, set_point.an);
 
-    if(forwardspeed == 0 && rotationspeed != 0){
-        robot.setRotationSpeed(rotationspeed);
+        if(forwardspeed == 0){
+            mission_started = false;
+            ui->startMissionButton->setText("Start mission");
+        }
+
+        if(forwardspeed == 0 && rotationspeed != 0){
+            robot.setRotationSpeed(rotationspeed);
+        }
+        else if(forwardspeed != 0 && rotationspeed != 0){
+            radius = forwardspeed/rotationspeed;
+        }
+
+        robot.setArcSpeed(forwardspeed, radius);
     }
-    else if(forwardspeed != 0 && rotationspeed != 0){
-        radius = forwardspeed/rotationspeed;
+    else{
+        robot.setArcSpeed(0, 0);
     }
-
-    robot.setArcSpeed(forwardspeed, radius);
-
-    robot.robot_odometry(robotdata, true);
 
     if(datacounter%5)
     {
@@ -158,8 +167,20 @@ void MainWindow::on_startButton_clicked() //start button
     forwardspeed=0;
     rotationspeed=0;
 
-    if(!ui->robotIP->text().isEmpty() && !isTest)
-        robot_data.robot_ip = ui->robotIP->text().toStdString();
+//    if(isValidIpAddress(ui->robotIP->text().toStdString())){
+//        robot_data.robot_ip = ui->robotIP->text().toStdString();
+//        std::cout << "Correct ip" << std::endl;
+//    }
+//    else{
+//        std::cout << "Incorrect ip" << std::endl;
+//        QMessageBox msgBox;
+//        msgBox.setWindowTitle("IP address error");
+//        msgBox.setText("Provided IP address is incorrect");
+//        msgBox.setStandardButtons(QMessageBox::Ok);
+//        if(msgBox.exec() == QMessageBox::Ok){
+//            return;
+//        }
+//    }
 
 
     std::string camera_link = "http://" + robot_data.robot_ip + ":"+robot_data.camera_port + "/stream.mjpg";
@@ -282,22 +303,18 @@ void MainWindow::on_robotIP_returnPressed()
 }
 
 
-
-
-void MainWindow::on_xn_returnPressed()
+void MainWindow::on_startMissionButton_clicked()
 {
-    set_point.xn = ui->xn->text().toDouble();
-}
-
-
-void MainWindow::on_lineEdit_returnPressed()
-{
-    set_point.an = ui->lineEdit->text().toDouble();
-}
-
-
-void MainWindow::on_yn_returnPressed()
-{
-    set_point.yn = ui->yn->text().toDouble();
+    if(!mission_started){
+        set_point.xn = ui->xn->text().toDouble();
+        set_point.an = 0.0;
+        set_point.yn = ui->yn->text().toDouble();
+        mission_started = true;
+        ui->startMissionButton->setText("Stop mission");
+    }
+    else{
+        mission_started = false;
+        ui->startMissionButton->setText("Start mission");
+    }
 }
 
