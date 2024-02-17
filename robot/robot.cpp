@@ -37,6 +37,7 @@ Robot::Robot(std::string ipaddressLaser,int laserportRobot, int laserportMe,std:
     robotCoord.x = 0;
     robotCoord.y = 0;
     missionStarted = false;
+    high_setpoint_angle = false;
 }
 void Robot::robotprocess()
 {
@@ -348,23 +349,28 @@ double Robot::robot_translational_reg(double setX, double setY)
     double treshold{0.1};
     double transSpeed{0.0};
     double increment{2.5};
+    double P{0.2};
 
     double ex = (setX - robotCoord.x)*1000.0; //[mm]
     double ey = (setY - robotCoord.y)*1000.0; //[mm]
 
     double dist = sqrt(pow(ex, 2) + pow(ey,2)); //[mm]
 
-    std::cout << "Dist= " << dist << " [mm]" << std::endl;
 
-    double P = 0.2;
+    if(high_setpoint_angle){
+        if(old_speed > 0)
+            old_speed -= 5.0;
+        if(old_speed < 0)
+            old_speed = 0;
+        return old_speed;
+    }
 
-    transSpeed = P*(dist);
+    transSpeed = P*dist;
 
     if(abs(dist)/1000.0 > treshold){
         if(old_speed < transSpeed){
             transSpeed = old_speed + increment;
         }
-        std::cout << "Trans = " << transSpeed << std::endl;
         if(transSpeed > 300.0){
             transSpeed = 300.0;
         }
@@ -377,7 +383,6 @@ double Robot::robot_translational_reg(double setX, double setY)
                 old_speed = 0.0;
         }
         transSpeed = old_speed;
-        std::cout << "Trans = " << transSpeed << std::endl;
     }
 
     return transSpeed;
@@ -397,11 +402,17 @@ double Robot::robot_rotational_reg(double setX, double setY, double setRot)
 
     eRot = std::atan2(std::sin(eRot), std::cos(eRot));
 
+    if(eRot > PI/4 || eRot < -PI/4){
+        high_setpoint_angle = true;
+    }
+    else{
+        high_setpoint_angle = false;
+    }
+
     double P = 0.5;
 
     if(abs(eRot) > treshold){
         rotSpeed = P* eRot;
     }
-
     return rotSpeed;
 }

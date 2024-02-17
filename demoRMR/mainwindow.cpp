@@ -9,20 +9,13 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    //tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
-  //  cap.open("http://192.168.1.11:8000/stream.mjpg");
+
     ui->setupUi(this);
     set_robot_connect_data();
     datacounter=0;
     isTest = true;
-  //  timer = new QTimer(this);
-//    connect(timer, SIGNAL(timeout()), this, SLOT(getNewFrame()));
     actIndex=-1;
     useCamera1=false;
-
-    set_point.xn = 0.0;
-    set_point.yn = 0.0;
-    set_point.an = 0.0;
 
     ui->xn->setText("0.0");
     ui->yn->setText("0.0");
@@ -90,31 +83,42 @@ void MainWindow::setUiValues(double robotX,double robotY,double robotFi)
 
 int MainWindow::processThisRobot(TKobukiData robotdata)
 {
-    int radius{0};
-
     robot.robot_odometry(robotdata, true);
 
     if(mission_started){
-        forwardspeed = robot.robot_translational_reg(set_point.xn, set_point.yn);
-        rotationspeed = robot.robot_rotational_reg(set_point.xn, set_point.yn, set_point.an);
 
-        if(forwardspeed == 0.0){
+        forwardspeed = robot.robot_translational_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1]);
+        rotationspeed = robot.robot_rotational_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1], 0.0);
+
+        if(set_point.xn.empty()){
             mission_started = false;
             ui->startMissionButton->setText("Start mission");
         }
 
-        if(forwardspeed == 0 && rotationspeed != 0){
-            robot.setRotationSpeed(rotationspeed);
-        }
-        else if(forwardspeed != 0 && rotationspeed != 0){
-            radius = forwardspeed/rotationspeed;
+        if(forwardspeed == 0.0 && rotationspeed == 0.0)
+        {
+            set_point.xn.pop_back();
+            set_point.yn.pop_back();
         }
 
-        robot.setArcSpeed(forwardspeed, radius);
+        if(forwardspeed == 0.0 && rotationspeed != 0.0){
+            robot.setRotationSpeed(rotationspeed);
+        }
+        else if(forwardspeed != 0.0 && rotationspeed != 0.0){
+            robot.setArcSpeed(forwardspeed, forwardspeed/rotationspeed);
+        }
+        else if(forwardspeed != 0.0 && rotationspeed == 0.0)
+            robot.setArcSpeed(forwardspeed, 0);
     }
     else{
-        robot.setArcSpeed(0, 0);
+        if(forwardspeed > 0)
+            forwardspeed -= 2.5;
+        if(forwardspeed < 0)
+            forwardspeed = 0;
+        robot.setArcSpeed(forwardspeed, 0);
     }
+
+    std::cout << "Forward speed=" << forwardspeed << std::endl;
 
     if(datacounter%5)
     {
@@ -305,16 +309,28 @@ void MainWindow::on_robotIP_returnPressed()
 
 void MainWindow::on_startMissionButton_clicked()
 {
-    if(!mission_started){
-        set_point.xn = ui->xn->text().toDouble();
-        set_point.an = 0.0;
-        set_point.yn = ui->yn->text().toDouble();
+    if(!mission_started && !set_point.xn.empty()){
         mission_started = true;
         ui->startMissionButton->setText("Stop mission");
     }
-    else{
+    else if(mission_started){
         mission_started = false;
         ui->startMissionButton->setText("Start mission");
     }
+}
+
+
+void MainWindow::on_pushButton_9_clicked()
+{
+    if(set_point.xn.empty() && set_point.yn.empty()){
+        set_point.xn.insert(set_point.xn.begin(),ui->xn->text().toDouble());
+        set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
+        return;
+    }
+    else if(set_point.xn[0] == ui->xn->text().toDouble() && set_point.yn[0] == ui->yn->text().toDouble())
+        return;
+
+    set_point.xn.insert(set_point.xn.begin(),ui->xn->text().toDouble());
+    set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
 }
 

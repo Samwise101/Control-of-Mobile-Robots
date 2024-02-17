@@ -36,9 +36,8 @@ typedef struct robot_connect_data{
 }robot_connect_data;
 
 typedef struct SetPoint{
-    double xn;
-    double yn;
-    double an;
+    std::vector<double> xn;
+    std::vector<double> yn;
 }SetPoint;
 
 bool isValidIpAddress(const std::string &ipAddress);
@@ -90,6 +89,8 @@ private slots:
 
     void on_startMissionButton_clicked();
 
+    void on_pushButton_9_clicked();
+
 private:
      JOYINFO joystickInfo;
     Ui::MainWindow *ui;
@@ -116,8 +117,6 @@ public slots:
      void setUiValues(double robotX,double robotY,double robotFi);
 signals:
      void uiValuesChanged(double newrobotX,double newrobotY,double newrobotFi); ///toto nema telo
-
-
 };
 
 

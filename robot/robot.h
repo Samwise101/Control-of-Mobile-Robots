@@ -90,6 +90,7 @@ private:
     int alphak_new = 0;
     bool missionStarted;
     double old_speed = 0.0;
+    bool high_setpoint_angle;
 
     bool robotStarted = true;
     unsigned short encl_new = 0;
