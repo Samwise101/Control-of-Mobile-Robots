@@ -22,6 +22,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     mission_started = false;
 
+    robotCoord.a = 0.0;
+    robotCoord.x = 0.0;
+    robotCoord.y = 0.0;
+
     datacounter=0;
 }
 
@@ -83,12 +87,15 @@ void MainWindow::setUiValues(double robotX,double robotY,double robotFi)
 
 int MainWindow::processThisRobot(TKobukiData robotdata)
 {
-    robot.robot_odometry(robotdata, true);
+    robot.robot_odometry(robotdata, true, robotCoord);
 
     if(mission_started){
 
-        forwardspeed = robot.robot_translational_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1]);
-        rotationspeed = robot.robot_rotational_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1], 0.0);
+        trans_motion trans_data = robot.robot_translational_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1], robotCoord);
+        rotation_motion rot_data = robot.robot_rotational_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1], robotCoord);
+
+        forwardspeed = trans_data.trans_speed;
+        rotationspeed = rot_data.rot_speed;
 
         if(set_point.xn.empty()){
             mission_started = false;
@@ -122,7 +129,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 
     if(datacounter%5)
     {
-        emit uiValuesChanged(robot.getRobotXCoord(),robot.getRobotYCoord(),robot.getRobotRotation());
+        emit uiValuesChanged(robotCoord.x, robotCoord.y, robotCoord.a);
     }
     datacounter++;
 
@@ -198,7 +205,7 @@ void MainWindow::on_startButton_clicked() //start button
     robot.setCameraParameters(camera_link,std::bind(&MainWindow::processThisCamera,this,std::placeholders::_1));
 
     robot.robotStart();
-    emit uiValuesChanged(robot.getRobotXCoord(),robot.getRobotYCoord(),robot.getRobotRotation());
+    emit uiValuesChanged(robotCoord.x, robotCoord.y, robotCoord.a);
 
     instance = QJoysticks::getInstance();
 

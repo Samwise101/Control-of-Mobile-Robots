@@ -93,7 +93,7 @@ private slots:
 
 private:
      JOYINFO joystickInfo;
-    Ui::MainWindow *ui;
+     Ui::MainWindow *ui;
      void paintEvent(QPaintEvent *event);// Q_DECL_OVERRIDE;
      int updateLaserPicture;
      LaserMeasurement copyOfLaserData;
@@ -110,6 +110,8 @@ private:
      SetPoint set_point;
 
      QJoysticks *instance;
+
+     RobotCoordRotation robotCoord;
 
      double forwardspeed;//mm/s
      double rotationspeed;//omega/s

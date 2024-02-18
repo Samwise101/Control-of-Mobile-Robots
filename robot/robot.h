@@ -28,6 +28,17 @@
 #include <iostream>
 #include <memory>
 
+typedef struct trans_motion{
+    double trans_speed;
+    double u;
+}trans_motion;
+
+typedef struct rotation_motion{
+    double rot_speed;
+    double u;
+}rotation_motion;
+
+
 class ROBOT_EXPORT Robot
 {
 public:
@@ -60,14 +71,10 @@ public:
 
     void setTranslationSpeed(int mmpersec);
 
-    double getRobotXCoord();
-    double getRobotYCoord();
-    double getRobotRotation();
+    void robot_odometry(TKobukiData &Kobuki_data, bool useGyro, RobotCoordRotation& robotCoord);
 
-    void robot_odometry(TKobukiData &Kobuki_data, bool useGyro);
-
-    double robot_translational_reg(double setX, double setY);
-    double robot_rotational_reg(double setX, double setY, double setRot);
+    trans_motion robot_translational_reg(double setX, double setY, RobotCoordRotation& robotCoord);
+    rotation_motion robot_rotational_reg(double setX, double setY, RobotCoordRotation& robotCoord);
 
     void setRotationSpeed(double radpersec);
     void setArcSpeed(int mmpersec,int radius);
@@ -80,8 +87,6 @@ public:
         wasCameraSet=1;
     }
 private:
-
-    RobotCoordRotation robotCoord;
 
     double l = 0.0;
     double lr = 0.0;

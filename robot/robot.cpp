@@ -33,9 +33,7 @@ Robot::Robot(std::string ipaddressLaser,int laserportRobot, int laserportMe,std:
     setLaserParameters(ipaddressLaser,laserportRobot,laserportMe,lascallback);
     setRobotParameters(ipaddressRobot,robotportRobot,robotportMe,robcallback);
     readyFuture=ready_promise.get_future();
-    robotCoord.a = 0;
-    robotCoord.x = 0;
-    robotCoord.y = 0;
+
     missionStarted = false;
     high_setpoint_angle = false;
 }
@@ -133,21 +131,6 @@ void Robot::setTranslationSpeed(int mmpersec)
     {
 
     }
-}
-
-double Robot::getRobotXCoord()
-{
-    return robotCoord.x;
-}
-
-double Robot::getRobotYCoord()
-{
-    return robotCoord.y;
-}
-
-double Robot::getRobotRotation()
-{
-    return robotCoord.a;
 }
 
 void Robot::setRotationSpeed(double radpersec) //left
@@ -270,7 +253,7 @@ void Robot::imageViewer()
     cap.release();
 }
 
-void Robot::robot_odometry(TKobukiData &Kobuki_data, bool useGyro)
+void Robot::robot_odometry(TKobukiData &Kobuki_data, bool useGyro, RobotCoordRotation& robotCoord)
 {
     int encl_old{0};
     int encr_old{0};
@@ -344,37 +327,35 @@ void Robot::robot_odometry(TKobukiData &Kobuki_data, bool useGyro)
     robotCoord.y = robotCoord.y + lk*sin(robotCoord.a*TO_RADIANS);
 }
 
-double Robot::robot_translational_reg(double setX, double setY)
+trans_motion Robot::robot_translational_reg(double setX, double setY, RobotCoordRotation& robotCoord)
 {
     double treshold{0.1};
-    double transSpeed{0.0};
     double increment{2.5};
-    double P{0.2};
+    trans_motion motion_data{0.0,0.25};
 
     double ex = (setX - robotCoord.x)*1000.0; //[mm]
     double ey = (setY - robotCoord.y)*1000.0; //[mm]
-
     double dist = sqrt(pow(ex, 2) + pow(ey,2)); //[mm]
-
 
     if(high_setpoint_angle){
         if(old_speed > 0)
             old_speed -= 5.0;
         if(old_speed < 0)
             old_speed = 0;
-        return old_speed;
+        motion_data.trans_speed = old_speed;
+        return motion_data;
     }
 
-    transSpeed = P*dist;
+    motion_data.trans_speed = motion_data.u*dist;
 
     if(abs(dist)/1000.0 > treshold){
-        if(old_speed < transSpeed){
-            transSpeed = old_speed + increment;
+        if(old_speed < motion_data.trans_speed){
+            motion_data.trans_speed = old_speed + increment;
         }
-        if(transSpeed > 300.0){
-            transSpeed = 300.0;
+        if(motion_data.trans_speed > 300.0){
+            motion_data.trans_speed = 300.0;
         }
-        old_speed = transSpeed;
+        old_speed = motion_data.trans_speed;
     }
     else{
         if(old_speed > 0.0){
@@ -382,16 +363,16 @@ double Robot::robot_translational_reg(double setX, double setY)
             if(old_speed < 0.0)
                 old_speed = 0.0;
         }
-        transSpeed = old_speed;
+        motion_data.trans_speed = old_speed;
     }
 
-    return transSpeed;
+    return motion_data;
 }
 
-double Robot::robot_rotational_reg(double setX, double setY, double setRot)
+rotation_motion Robot::robot_rotational_reg(double setX, double setY, RobotCoordRotation& robotCoord)
 {
     double treshold{0.1};
-    double rotSpeed{0.0};
+    rotation_motion rot_motion{0.0,0.5};
 
     double ex = (setX - robotCoord.x);
     double ey = (setY - robotCoord.y);
@@ -409,10 +390,8 @@ double Robot::robot_rotational_reg(double setX, double setY, double setRot)
         high_setpoint_angle = false;
     }
 
-    double P = 0.5;
-
     if(abs(eRot) > treshold){
-        rotSpeed = P* eRot;
+        rot_motion.rot_speed = rot_motion.u* eRot;
     }
-    return rotSpeed;
+    return rot_motion;
 }
