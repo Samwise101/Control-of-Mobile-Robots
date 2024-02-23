@@ -78,9 +78,9 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 painter.drawEllipse((centerX-width/2), (centerY-height/2), width, height);
                 painter.setBrush(Qt::yellow);
                 QPointF *points = new QPointF[3];
-                points[0] = QPointF((centerX+width/2-5)*cos(90*TO_RADIANS),centerY*sin(90*TO_RADIANS));
-                points[1] = QPointF(centerX*cos(90*TO_RADIANS),(centerY-height/2)*sin(90*TO_RADIANS));
-                points[2] = QPointF((centerX-width/2+5)*cos(90*TO_RADIANS),centerY*sin(90*TO_RADIANS));;
+                points[0] = QPointF((centerX+width/2-5),centerY);
+                points[1] = QPointF(centerX,(centerY-height/2));
+                points[2] = QPointF((centerX-width/2+5),centerY);;
                 painter.drawPolygon(points,3);
                 delete[] points;
             }
@@ -93,8 +93,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
             for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
             {
                 int dist=copyOfLaserData.Data[k].scanDistance/20;
-                int xp=rect.width()-(rect.width()/2+dist*2*sin((360.0+copyOfLaserData.Data[k].scanAngle + 90.0)*TO_RADIANS))+rect.topLeft().x();
-                int yp=rect.height()-(rect.height()/2+dist*2*cos((360.0+copyOfLaserData.Data[k].scanAngle + 90.0)*TO_RADIANS))+rect.topLeft().y();
+                int xp=rect.width()-(rect.width()/2+dist*2*sin((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().x();
+                int yp=rect.height()-(rect.height()/2+dist*2*cos((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().y();
                 if(rect.contains(xp,yp))
                     painter.drawEllipse(QPoint(xp, yp),2,2);
             }
