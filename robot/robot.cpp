@@ -295,7 +295,6 @@ void Robot::robot_odometry(TKobukiData &Kobuki_data, bool useGyro, RobotCoordRot
 
     double lkl = tickToMeter*(encl_diff);
     double lkr = tickToMeter*(encr_diff);
-
     double lk = (lkr + lkl)/2;
 
     lr += lkr;
@@ -327,71 +326,51 @@ void Robot::robot_odometry(TKobukiData &Kobuki_data, bool useGyro, RobotCoordRot
     robotCoord.y = robotCoord.y + lk*sin(robotCoord.a*TO_RADIANS);
 }
 
-trans_motion Robot::robot_translational_reg(double setX, double setY, RobotCoordRotation& robotCoord)
+
+robot_motion Robot::robot_movement_reg(double setX, double setY, RobotCoordRotation &robotCoord)
 {
-    double treshold{0.1};
-    double increment{2.5};
-    trans_motion motion_data{0.0,0.25};
+    robot_motion robot{0.0,0.65,0.0,0.3};
 
-    double ex = (setX - robotCoord.x)*1000.0; //[mm]
-    double ey = (setY - robotCoord.y)*1000.0; //[mm]
-    double dist = sqrt(pow(ex, 2) + pow(ey,2)); //[mm]
+    double treshHold = 0.05;
+    double rot_dead_zone = 45;
 
-    if(high_setpoint_angle){
-        if(old_speed > 0)
-            old_speed -= 5.0;
-        if(old_speed < 0)
-            old_speed = 0;
-        motion_data.trans_speed = old_speed;
-        return motion_data;
-    }
+    double ex = (setX - robotCoord.x)*1000.0;
+    double ey = (setY - robotCoord.y)*1000.0;
 
-    motion_data.trans_speed = motion_data.u*dist;
+    treshHold = treshHold *1000.0;
 
-    if(abs(dist)/1000.0 > treshold){
-        if(old_speed < motion_data.trans_speed){
-            motion_data.trans_speed = old_speed + increment;
-        }
-        if(motion_data.trans_speed > 300.0){
-            motion_data.trans_speed = 300.0;
-        }
-        old_speed = motion_data.trans_speed;
-    }
-    else{
-        if(old_speed > 0.0){
-            old_speed = old_speed - 2.5;
-            if(old_speed < 0.0)
-                old_speed = 0.0;
-        }
-        motion_data.trans_speed = old_speed;
-    }
-
-    return motion_data;
-}
-
-rotation_motion Robot::robot_rotational_reg(double setX, double setY, RobotCoordRotation& robotCoord)
-{
-    double treshold{0.1};
-    rotation_motion rot_motion{0.0,0.5};
-
-    double ex = (setX - robotCoord.x);
-    double ey = (setY - robotCoord.y);
-
-    double neededRot = atan2(ey, ex);
-
-    double eRot = neededRot - robotCoord.a*TO_RADIANS;
-
+    double eRot = std::atan2(ey,ex) - robotCoord.a*TO_RADIANS;
     eRot = std::atan2(std::sin(eRot), std::cos(eRot));
+    double eDist = sqrt(ex*ex + ey*ey);
 
-    if(eRot > PI/4 || eRot < -PI/4){
-        high_setpoint_angle = true;
-    }
-    else{
-        high_setpoint_angle = false;
+    if(abs(ex) < treshHold && abs(ey) < treshHold){
+        std::cout << "At goal!!!" << std::endl;
+
+        integ = 0;
+        return robot;
     }
 
-    if(abs(eRot) > treshold){
-        rot_motion.rot_speed = rot_motion.u* eRot;
+    integ += eDist * 0.03;
+
+    if (integ > 50.0)
+        integ = 50.0;
+    else if (integ < -50.0)
+        integ = -50.0;
+
+    if(eRot < rot_dead_zone*TO_RADIANS && eRot > -rot_dead_zone*TO_RADIANS){
+
+        robot.trans_speed = robot.u_trans*eDist + 0.25*integ;
+
+        if(old_speed < robot.trans_speed){
+            robot.trans_speed = old_speed + 2.5;
+        }
+        if(robot.trans_speed > 300.0){
+            robot.trans_speed = 300.0;
+        }
+        old_speed = robot.trans_speed;
     }
-    return rot_motion;
+
+    robot.rot_speed = robot.u_rot*eRot;
+
+    return robot;
 }

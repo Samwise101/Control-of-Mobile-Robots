@@ -28,15 +28,12 @@
 #include <iostream>
 #include <memory>
 
-typedef struct trans_motion{
-    double trans_speed;
-    double u;
-}trans_motion;
-
-typedef struct rotation_motion{
+typedef struct robot_motion{
     double rot_speed;
-    double u;
-}rotation_motion;
+    double u_rot;
+    double trans_speed;
+    double u_trans;
+}robot_motion;
 
 
 class ROBOT_EXPORT Robot
@@ -73,8 +70,7 @@ public:
 
     void robot_odometry(TKobukiData &Kobuki_data, bool useGyro, RobotCoordRotation& robotCoord);
 
-    trans_motion robot_translational_reg(double setX, double setY, RobotCoordRotation& robotCoord);
-    rotation_motion robot_rotational_reg(double setX, double setY, RobotCoordRotation& robotCoord);
+    robot_motion robot_movement_reg(double setX, double setY, RobotCoordRotation& robotCoord);
 
     void setRotationSpeed(double radpersec);
     void setArcSpeed(int mmpersec,int radius);
@@ -96,6 +92,8 @@ private:
     bool missionStarted;
     double old_speed = 0.0;
     bool high_setpoint_angle;
+
+    double integ = 0.0;
 
     bool robotStarted = true;
     unsigned short encl_new = 0;

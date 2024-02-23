@@ -42,10 +42,15 @@ void MainWindow::paintEvent(QPaintEvent *event)
     pero.setStyle(Qt::SolidLine);
     pero.setWidth(3);
     pero.setColor(Qt::green);
+    QPen pero2;
+    pero2.setStyle(Qt::SolidLine);
+    pero2.setWidth(3);
+    pero2.setColor(Qt::yellow);
     QRect rect(20,120,700,500);
     rect= ui->frame->geometry();
     rect.translate(0,15);
     painter.drawRect(rect);
+
 
     if(useCamera1==true && actIndex>-1)
     {
@@ -57,19 +62,39 @@ void MainWindow::paintEvent(QPaintEvent *event)
     {
         if(updateLaserPicture==1)
         {
+            int offsetX = 15;
+            int offsetY = 20;
+            int width = 40;
+            int height = 40;
+
+            painter.setPen(pero2);
+
+            int xp = rect.width()/2+rect.topLeft().x()-offsetX;
+            int yp = rect.height()/2+rect.topLeft().y()-offsetY;
+            int centerX = xp+width/2;
+            int centerY = yp+height/2;
+
+            if(rect.contains(xp,yp)){
+                painter.drawEllipse((centerX-width/2), (centerY-height/2), width, height);
+                painter.setBrush(Qt::yellow);
+                QPointF *points = new QPointF[3];
+                points[0] = QPointF((centerX+width/2-5)*cos(90*TO_RADIANS),centerY*sin(90*TO_RADIANS));
+                points[1] = QPointF(centerX*cos(90*TO_RADIANS),(centerY-height/2)*sin(90*TO_RADIANS));
+                points[2] = QPointF((centerX-width/2+5)*cos(90*TO_RADIANS),centerY*sin(90*TO_RADIANS));;
+                painter.drawPolygon(points,3);
+                delete[] points;
+            }
+
             updateLaserPicture=0;
 
             painter.setPen(pero);
-            //teraz tu kreslime random udaje... vykreslite to co treba... t.j. data z lidaru
-         //   std::cout<<copyOfLaserData.numberOfScans<<std::endl;
+            painter.setBrush(Qt::black);
+
             for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
             {
-                /*  int dist=rand()%500;
-            int xp=rect.width()-(rect.width()/2+dist*2*sin((360.0-k)*3.14159/180.0))+rect.topLeft().x();
-            int yp=rect.height()-(rect.height()/2+dist*2*cos((360.0-k)*3.14159/180.0))+rect.topLeft().y();*/
                 int dist=copyOfLaserData.Data[k].scanDistance/20;
-                int xp=rect.width()-(rect.width()/2+dist*2*sin((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().x();
-                int yp=rect.height()-(rect.height()/2+dist*2*cos((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().y();
+                int xp=rect.width()-(rect.width()/2+dist*2*sin((360.0+copyOfLaserData.Data[k].scanAngle + 90.0)*TO_RADIANS))+rect.topLeft().x();
+                int yp=rect.height()-(rect.height()/2+dist*2*cos((360.0+copyOfLaserData.Data[k].scanAngle + 90.0)*TO_RADIANS))+rect.topLeft().y();
                 if(rect.contains(xp,yp))
                     painter.drawEllipse(QPoint(xp, yp),2,2);
             }
@@ -89,13 +114,14 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 {
     robot.robot_odometry(robotdata, true, robotCoord);
 
-    if(mission_started){
+    if(mission_started && !set_point.xn.empty()){
 
-        trans_motion trans_data = robot.robot_translational_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1], robotCoord);
-        rotation_motion rot_data = robot.robot_rotational_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1], robotCoord);
+        robot_motion robot_movement = robot.robot_movement_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1], robotCoord);
 
-        forwardspeed = trans_data.trans_speed;
-        rotationspeed = rot_data.rot_speed;
+        forwardspeed = robot_movement.trans_speed;
+        rotationspeed = robot_movement.rot_speed;
+
+        std::cout << "Speed = " << forwardspeed << std::endl;
 
         if(set_point.xn.empty()){
             mission_started = false;
@@ -125,8 +151,6 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
         robot.setArcSpeed(forwardspeed, 0);
     }
 
-    std::cout << "Forward speed=" << forwardspeed << std::endl;
-
     if(datacounter%5)
     {
         emit uiValuesChanged(robotCoord.x, robotCoord.y, robotCoord.a);
@@ -146,6 +170,7 @@ void MainWindow::set_robot_connect_data()
     robot_data.lidar_port_me = 5299;
     robot_data.camera_port = "8889";
 }
+
 
 int MainWindow::processThisLidar(LaserMeasurement laserData)
 {
@@ -190,7 +215,7 @@ void MainWindow::on_startButton_clicked() //start button
 //        msgBox.setStandardButtons(QMessageBox::Ok);
 //        if(msgBox.exec() == QMessageBox::Ok){
 //            return;
-//        }
+//        }s
 //    }
 
 
@@ -292,7 +317,6 @@ void MainWindow::getNewFrame()
 {
 
 }
-
 
 void MainWindow::on_robotIP_returnPressed()
 {
