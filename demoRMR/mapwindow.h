@@ -16,8 +16,10 @@ public:
     explicit mapWindow(QWidget *parent = nullptr);
     ~mapWindow();
 
-    void resizeToLeft(double newLength);
-    void resizeToRight(double newLength);
+    void resizeToLeftTop(double newLength);
+    void resizeToRightTop(double newLength);
+    void resizeToLeftBottom(double newLength);
+    void resizeToRightBottom(double newLength);
 
     std::vector<std::vector<int>>& getMap();
 

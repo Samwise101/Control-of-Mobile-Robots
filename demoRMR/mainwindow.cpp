@@ -93,8 +93,12 @@ void MainWindow::paintEvent(QPaintEvent *event)
             for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
             {
                 int dist=copyOfLaserData.Data[k].scanDistance/20;
-                int xp=rect.width()-(rect.width()/2+dist*2*sin((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().x();
-                int yp=rect.height()-(rect.height()/2+dist*2*cos((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().y();
+                //int xp=rect.width()-(rect.width()/2+dist*2*sin((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().x();
+                //int yp=rect.height()-(rect.height()/2+dist*2*cos((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().y();
+
+                xp = rect.width()/2 + (robotCoord.x + dist*sin((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+robotCoord.a*TO_RADIANS) + rect.topLeft().x());
+                yp = rect.height()/2 + (robotCoord.y + dist*cos((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+robotCoord.a*TO_RADIANS) + rect.topLeft().y());
+
                 if(rect.contains(xp,yp))
                     painter.drawEllipse(QPoint(xp, yp),2,2);
             }
@@ -121,7 +125,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
         forwardspeed = robot_movement.trans_speed;
         rotationspeed = robot_movement.rot_speed;
 
-        std::cout << "Speed = " << forwardspeed << std::endl;
+        //std::cout << "Speed = " << forwardspeed << std::endl;
 
         if(set_point.xn.empty()){
             mission_started = false;
@@ -369,8 +373,7 @@ void MainWindow::on_pushButton_9_clicked()
 void MainWindow::on_pushButton_10_clicked()
 {
     mapWindow mapDialog;
-    mapDialog.resizeToLeft(mapDialog.getLength() + 10);
-    mapDialog.resizeToRight(mapDialog.getLength() + 10);
+    mapDialog.resizeToLeftTop(mapDialog.getLength() + 10);
 
     mapDialog.exec();
 }

@@ -9,7 +9,7 @@ mapWindow::mapWindow(QWidget *parent) :
     length = 20.0;
     map.resize(length);
     for(int i = 0; i < length; i++){
-        map[i].resize(length,0);
+        map[i].resize(length,1);
     }
     ui->setupUi(this);
 }
@@ -19,7 +19,7 @@ mapWindow::~mapWindow()
     delete ui;
 }
 
-void mapWindow::resizeToLeft(double newLength)
+void mapWindow::resizeToLeftBottom(double newLength)
 {
     map.resize(newLength);
     for(int i = 0; i < newLength; i++){
@@ -30,6 +30,45 @@ void mapWindow::resizeToLeft(double newLength)
 
     for(int i = length-1; i >= 0; i--){
         for(int j = 0; j < length; j++){
+            map[i+l][j+l] = map[i][j];
+            map[i][j] = 0;
+        }
+    }
+
+    length = newLength;
+}
+
+void mapWindow::resizeToLeftTop(double newLength)
+{
+    map.resize(newLength);
+    for(int i = 0; i < newLength; i++){
+        map[i].resize(newLength,0);
+    }
+
+    auto l = newLength - length;
+
+    for(int i = 0; i < length; i++){
+        for(int j = length-1; j >= 0; j--){
+            map[i][j+l] = map[i][j];
+            map[i][j] = 0;
+        }
+    }
+
+
+    length = newLength;
+}
+
+void mapWindow::resizeToRightBottom(double newLength)
+{
+    map.resize(newLength);
+    for(int i = 0; i < newLength; i++){
+        map[i].resize(newLength,0);
+    }
+
+    auto l = newLength - length;
+
+    for(int i = length-1; i >=0; i--){
+        for(int j = 0; j < length; j++){
             map[i+l][j] = map[i][j];
             map[i][j] = 0;
         }
@@ -38,7 +77,7 @@ void mapWindow::resizeToLeft(double newLength)
     length = newLength;
 }
 
-void mapWindow::resizeToRight(double newLength)
+void mapWindow::resizeToRightTop(double newLength)
 {
     map.resize(newLength);
     for(int i = 0; i < newLength; i++){
@@ -76,5 +115,4 @@ void mapWindow::paintEvent(QPaintEvent *event)
     rect= ui->frame->geometry();
     rect.translate(0,15);
     painter.drawRect(rect);
-
 }
