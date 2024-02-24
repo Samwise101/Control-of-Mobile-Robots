@@ -25,6 +25,7 @@
 #include <memory.h>
 #include <QMessageBox>
 #include <QJoysticks.h>
+#include "mapwindow.h"
 
 typedef struct robot_connect_data{
     int robot_port;
@@ -90,6 +91,8 @@ private slots:
     void on_startMissionButton_clicked();
 
     void on_pushButton_9_clicked();
+
+    void on_pushButton_10_clicked();
 
 private:
      JOYINFO joystickInfo;

@@ -365,3 +365,14 @@ void MainWindow::on_pushButton_9_clicked()
     set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
 }
 
+
+void MainWindow::on_pushButton_10_clicked()
+{
+    mapWindow mapDialog;
+    mapDialog.resizeToLeft(mapDialog.getLength() + 10);
+    mapDialog.resizeToRight(mapDialog.getLength() + 10);
+
+    mapDialog.exec();
+
+}
+

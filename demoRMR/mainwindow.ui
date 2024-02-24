@@ -218,6 +218,13 @@
        </spacer>
       </item>
       <item>
+       <widget class="QPushButton" name="pushButton_10">
+        <property name="text">
+         <string>Open map dialog</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="startMissionButton">
         <property name="text">
          <string>Start Mission</string>
