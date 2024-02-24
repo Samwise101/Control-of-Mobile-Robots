@@ -1,5 +1,6 @@
 #include "mapwindow.h"
 #include "ui_mapwindow.h"
+#include <QPainter>
 
 mapWindow::mapWindow(QWidget *parent) :
     QDialog(parent),
@@ -8,7 +9,7 @@ mapWindow::mapWindow(QWidget *parent) :
     length = 20.0;
     map.resize(length);
     for(int i = 0; i < length; i++){
-        map[i].resize(length,1);
+        map[i].resize(length,0);
     }
     ui->setupUi(this);
 }
@@ -60,4 +61,20 @@ double mapWindow::getLength() const
 void mapWindow::setLength(double newLength)
 {
     length = newLength;
+}
+
+void mapWindow::paintEvent(QPaintEvent *event)
+{
+    QPainter painter(this);
+    painter.setBrush(Qt::white);
+    QPen pen;
+    pen.setStyle(Qt::SolidLine);
+    pen.setWidth(3);
+    pen.setColor(Qt::black);
+
+    QRect rect(10,10,length+10,length+10);
+    rect= ui->frame->geometry();
+    rect.translate(0,15);
+    painter.drawRect(rect);
+
 }

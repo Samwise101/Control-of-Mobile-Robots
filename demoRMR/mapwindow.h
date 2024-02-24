@@ -29,6 +29,8 @@ private:
     std::vector<std::vector<int>> map;
     double length;
 
+    void paintEvent(QPaintEvent *event);// Q_DECL_OVERRIDE;
+
 };
 
 #endif // MAPWINDOW_H

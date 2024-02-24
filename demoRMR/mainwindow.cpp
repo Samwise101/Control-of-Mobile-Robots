@@ -373,6 +373,5 @@ void MainWindow::on_pushButton_10_clicked()
     mapDialog.resizeToRight(mapDialog.getLength() + 10);
 
     mapDialog.exec();
-
 }
 
