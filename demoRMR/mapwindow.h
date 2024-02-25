@@ -21,6 +21,10 @@ public:
     void resizeToLeftBottom(double newLength);
     void resizeToRightBottom(double newLength);
 
+    double &getBaseLength();
+
+    void writeToGrid(int& xgi, int& ygi);
+
     std::vector<std::vector<int>>& getMap();
 
     double getLength() const;
@@ -30,6 +34,7 @@ private:
     Ui::mapWindow *ui;
     std::vector<std::vector<int>> map;
     double length;
+    double baseLength;
 
     void paintEvent(QPaintEvent *event);// Q_DECL_OVERRIDE;
 

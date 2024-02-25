@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QPainter>
+#include <QDebug>
 #include <math.h>
 #include <regex>
 
@@ -69,38 +70,46 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
             painter.setPen(pero2);
 
-            int xp = rect.width()/2+rect.topLeft().x()-offsetX;
-            int yp = rect.height()/2+rect.topLeft().y()-offsetY;
-            int centerX = xp+width/2;
-            int centerY = yp+height/2;
+            double scale = 1.0;
 
-            if(rect.contains(xp,yp)){
-                painter.drawEllipse((centerX-width/2), (centerY-height/2), width, height);
-                painter.setBrush(Qt::yellow);
-                QPointF *points = new QPointF[3];
-                points[0] = QPointF((centerX+width/2-5),centerY);
-                points[1] = QPointF(centerX,(centerY-height/2));
-                points[2] = QPointF((centerX-width/2+5),centerY);;
-                painter.drawPolygon(points,3);
-                delete[] points;
-            }
+            int robotX = rect.width()/2 + rect.topLeft().x()+ robotCoord.x*100.0;
+            int robotY = rect.height()/2 + rect.topLeft().y() - robotCoord.y*100.0;
+            double realTheta = robotCoord.a*TO_RADIANS;
+
+            painter.drawEllipse(robotX-20*scale, robotY-20*scale, 40*scale, 40*scale);
+            painter.drawLine(robotX, robotY, robotX+20*std::cos(realTheta)*scale, robotY-20*std::sin(realTheta)*scale);
 
             updateLaserPicture=0;
 
-            painter.setPen(pero);
-            painter.setBrush(Qt::black);
-
             for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
             {
-                int dist=copyOfLaserData.Data[k].scanDistance/20;
-                //int xp=rect.width()-(rect.width()/2+dist*2*sin((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().x();
-                //int yp=rect.height()-(rect.height()/2+dist*2*cos((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().y();
+                int lidarDist=copyOfLaserData.Data[k].scanDistance;
+                lidarDist = lidarDist/10*scale;
+                int xp = (robotX + lidarDist*sin((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+realTheta));
+                int yp = (robotY + lidarDist*cos((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+realTheta));
 
-                xp = rect.width()/2 + (robotCoord.x + dist*sin((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+robotCoord.a*TO_RADIANS) + rect.topLeft().x());
-                yp = rect.height()/2 + (robotCoord.y + dist*cos((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+robotCoord.a*TO_RADIANS) + rect.topLeft().y());
+                int xp2 = xp/2;
+                int yp2 = yp/2;
 
-                if(rect.contains(xp,yp))
+                if(xp2 < 0 || yp2 < 0)
+                    qDebug() << "x=" << xp2 << ", yp=" << yp2;
+
+                if(rect.contains(xp,yp)){
                     painter.drawEllipse(QPoint(xp, yp),2,2);
+                }
+                if(abs(robotX/2 - xp2) < 20 || abs(robotX/2 - xp2) < 20){
+                    continue;
+                }
+                else if(lidarDist <= 300.0 && k%5 == 0){
+                    xp2 += mapDialog.getBaseLength();
+                    yp2 += mapDialog.getBaseLength();
+                    // Treba otestovat resize
+//                    if(xp2 < 0 || xp2 > mapDialog.getLength() || yp2 < 0 || yp2 > mapDialog.getLength()){
+//                        auto l = mapDialog.getLength();
+//                        resizeMapGrid(xp2,yp2,mapDialog.getBaseLength(),l);
+//                    }
+                    mapDialog.writeToGrid(xp2,yp2);
+                }
             }
         }
     }
@@ -173,6 +182,34 @@ void MainWindow::set_robot_connect_data()
     robot_data.lidar_port = 52999;
     robot_data.lidar_port_me = 5299;
     robot_data.camera_port = "8889";
+}
+
+void MainWindow::resizeMapGrid(int& xgi, int& ygi, double& base, double& length)
+{
+    if(xgi < 0 && ygi < 0){
+        mapDialog.resizeToLeftBottom(length+base);
+    }
+    else if(xgi > length && ygi > length){
+        mapDialog.resizeToRightTop(length+base);
+    }
+    else if(xgi > length && ygi < 0){
+        mapDialog.resizeToLeftTop(length+base);
+    }
+    else if(xgi < 0 && ygi > length){
+        mapDialog.resizeToRightBottom(length+base);
+    }
+    else if(xgi < 0){
+        mapDialog.resizeToLeftBottom(length+base);
+    }
+    else if(xgi > length){
+        mapDialog.resizeToRightTop(length+base);
+    }
+    else if(ygi < 0){
+        mapDialog.resizeToLeftTop(length+base);
+    }
+    else if(ygi > length){
+        mapDialog.resizeToRightBottom(length+base);
+    }
 }
 
 
@@ -372,9 +409,6 @@ void MainWindow::on_pushButton_9_clicked()
 
 void MainWindow::on_pushButton_10_clicked()
 {
-    mapWindow mapDialog;
-    mapDialog.resizeToLeftTop(mapDialog.getLength() + 10);
-
     mapDialog.exec();
 }
 

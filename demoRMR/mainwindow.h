@@ -68,6 +68,8 @@ public:
 
     void set_robot_connect_data();
 
+    void resizeMapGrid(int& xgi, int& ygi, double& base, double& length);
+
 int processThisCamera(cv::Mat cameraData);
 
 private slots:
@@ -107,6 +109,8 @@ private:
      robot_connect_data robot_data;
      int datacounter;
      QTimer *timer;
+
+     mapWindow mapDialog;
 
      bool mission_started;
 
