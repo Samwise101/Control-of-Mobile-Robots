@@ -72,43 +72,62 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
             double scale = 1.0;
 
-            int robotX = rect.width()/2 + rect.topLeft().x()+ robotCoord.x*100.0;
-            int robotY = rect.height()/2 + rect.topLeft().y() - robotCoord.y*100.0;
+//            int robotX = rect.width()/2 + rect.topLeft().x()+ robotCoord.x*100.0;
+//            int robotY = rect.height()/2 + rect.topLeft().y() - robotCoord.y*100.0;
+//            double realTheta = robotCoord.a*TO_RADIANS;
+
+//            painter.drawEllipse(robotX-20*scale, robotY-20*scale, 40*scale, 40*scale);
+//            painter.drawLine(robotX, robotY, robotX+20*std::cos(realTheta)*scale, robotY-20*std::sin(realTheta)*scale);
+
+            int robotX = 0 + robotCoord.x*100.0;
+            int robotY = 0 - robotCoord.y*100.0;
             double realTheta = robotCoord.a*TO_RADIANS;
 
-            painter.drawEllipse(robotX-20*scale, robotY-20*scale, 40*scale, 40*scale);
-            painter.drawLine(robotX, robotY, robotX+20*std::cos(realTheta)*scale, robotY-20*std::sin(realTheta)*scale);
+            int x = rect.width()/2+rect.topLeft().x()-offsetX;
+            int y = rect.height()/2+rect.topLeft().y()-offsetY;
+            int centerX = x+width/2;
+            int centerY = y+height/2;
+
+            if(rect.contains(x,y)){
+                painter.drawEllipse((centerX-width/2), (centerY-height/2), width, height);
+                painter.setBrush(Qt::yellow);
+                QPointF *points = new QPointF[3];
+                points[0] = QPointF((centerX+width/2-5),centerY);
+                points[1] = QPointF(centerX,(centerY-height/2));
+                points[2] = QPointF((centerX-width/2+5),centerY);;
+                painter.drawPolygon(points,3);
+                delete[] points;
+            }
 
             updateLaserPicture=0;
 
             for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
             {
-                int lidarDist=copyOfLaserData.Data[k].scanDistance;
-                lidarDist = lidarDist/10*scale;
-                int xp = (robotX + lidarDist*sin((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+realTheta));
-                int yp = (robotY + lidarDist*cos((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+realTheta));
-
-                int xp2 = xp/2;
-                int yp2 = yp/2;
-
-                if(xp2 < 0 || yp2 < 0)
-                    qDebug() << "x=" << xp2 << ", yp=" << yp2;
-
-                if(rect.contains(xp,yp)){
+                int lidarDist=copyOfLaserData.Data[k].scanDistance/20;
+                int xp=rect.width()-(rect.width()/2+lidarDist*2*sin((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().x();
+                int yp=rect.height()-(rect.height()/2+lidarDist*2*cos((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().y();
+                if(rect.contains(xp,yp))
                     painter.drawEllipse(QPoint(xp, yp),2,2);
-                }
-                if(abs(robotX/2 - xp2) < 20 || abs(robotX/2 - xp2) < 20){
+
+                lidarDist*=2;
+                xp = (robotX + lidarDist*sin((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+realTheta));
+                yp = (robotY + lidarDist*cos((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+realTheta));
+
+                if(xp < 0 || yp < 0)
+                    qDebug() << "x=" << xp << ", yp=" << yp;
+
+                if(abs(robotX/2 - xp) < 30 || abs(robotX/2 - xp) < 30){
                     continue;
                 }
                 else if(lidarDist <= 300.0 && k%5 == 0){
-                    xp2 += mapDialog.getBaseLength();
-                    yp2 += mapDialog.getBaseLength();
+                    xp += mapDialog.getBaseLength();
+                    yp += mapDialog.getBaseLength();
                     // Treba otestovat resize
 //                    if(xp2 < 0 || xp2 > mapDialog.getLength() || yp2 < 0 || yp2 > mapDialog.getLength()){
 //                        auto l = mapDialog.getLength();
 //                        resizeMapGrid(xp2,yp2,mapDialog.getBaseLength(),l);
 //                    }
-                    mapDialog.writeToGrid(xp2,yp2);
+                    mapDialog.writeToGrid(xp,yp);
                 }
             }
         }
