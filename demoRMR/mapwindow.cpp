@@ -37,7 +37,7 @@ void mapWindow::resizeToLeftBottom(double newLength)
     }
 
     length = newLength;
-    baseLength+=l;
+    baseLength = l;
 }
 
 void mapWindow::resizeToLeftTop(double newLength)
@@ -57,7 +57,7 @@ void mapWindow::resizeToLeftTop(double newLength)
     }
 
     length = newLength;
-    baseLength+=l;
+    baseLength = l;
 }
 
 void mapWindow::resizeToRightBottom(double newLength)
@@ -77,7 +77,7 @@ void mapWindow::resizeToRightBottom(double newLength)
     }
 
     length = newLength;
-    baseLength+=l;
+    baseLength = l;
 }
 
 double &mapWindow::getBaseLength()
@@ -101,7 +101,7 @@ void mapWindow::resizeToRightTop(double newLength)
     }
     auto l = newLength - length;
     length = newLength;
-    baseLength+=l;
+    baseLength = l;
 }
 
 std::vector<std::vector<int>>& mapWindow::getMap()
@@ -136,8 +136,8 @@ void mapWindow::paintEvent(QPaintEvent *event)
     for(int i = 0; i < map.size(); i++){
         for(int j = 0; j < map[i].size();j++){
             if(map[i][j]==1){
-                int x =  i/2;
-                int y =  j/2;
+                int x =  50+i/2;
+                int y =  150+j/2;
                 painter.drawEllipse(QPoint(x,y),2,2);
             }
         }

@@ -70,7 +70,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
             painter.setPen(pero2);
 
-            double scale = 1.0;
+//            double scale = 1.0;
 
 //            int robotX = rect.width()/2 + rect.topLeft().x()+ robotCoord.x*100.0;
 //            int robotY = rect.height()/2 + rect.topLeft().y() - robotCoord.y*100.0;
@@ -106,6 +106,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 int lidarDist=copyOfLaserData.Data[k].scanDistance/20;
                 int xp=rect.width()-(rect.width()/2+lidarDist*2*sin((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().x();
                 int yp=rect.height()-(rect.height()/2+lidarDist*2*cos((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().y();
+
                 if(rect.contains(xp,yp))
                     painter.drawEllipse(QPoint(xp, yp),2,2);
 
@@ -113,21 +114,24 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 xp = (robotX + lidarDist*sin((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+realTheta));
                 yp = (robotY + lidarDist*cos((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+realTheta));
 
-                if(xp < 0 || yp < 0)
-                    qDebug() << "x=" << xp << ", yp=" << yp;
+//                if(xp < 0 || yp < 0)
+//                    qDebug() << "x=" << xp << ", yp=" << yp;
 
-                if(abs(robotX/2 - xp) < 30 || abs(robotX/2 - xp) < 30){
+                if(abs(robotX/2 - xp) < 35 || abs(robotX/2 - xp) < 35){
                     continue;
                 }
-                else if(lidarDist <= 300.0 && k%5 == 0){
-                    xp += mapDialog.getBaseLength();
-                    yp += mapDialog.getBaseLength();
+                else if(lidarDist <= 300.0 && k%6 == 0){
+                    auto bl = mapDialog.getBaseLength();
+                    xp += bl;
+                    yp += bl;
+                    auto l = mapDialog.getLength();
+                    std::cout << "xp=" << xp << ", yp=" << yp << ", length=" << l << std::endl;
                     // Treba otestovat resize
-//                    if(xp2 < 0 || xp2 > mapDialog.getLength() || yp2 < 0 || yp2 > mapDialog.getLength()){
-//                        auto l = mapDialog.getLength();
-//                        resizeMapGrid(xp2,yp2,mapDialog.getBaseLength(),l);
-//                    }
-                    mapDialog.writeToGrid(xp,yp);
+                    if(xp < 0 || xp >= l || yp < 0 || yp >= l){
+                        resizeMapGrid(xp,yp,bl,l);
+                    }
+                    else
+                        mapDialog.writeToGrid(xp,yp);
                 }
             }
         }
@@ -208,25 +212,25 @@ void MainWindow::resizeMapGrid(int& xgi, int& ygi, double& base, double& length)
     if(xgi < 0 && ygi < 0){
         mapDialog.resizeToLeftBottom(length+base);
     }
-    else if(xgi > length && ygi > length){
+    else if(xgi >= length && ygi >= length){
         mapDialog.resizeToRightTop(length+base);
     }
-    else if(xgi > length && ygi < 0){
+    else if(xgi >= length && ygi < 0){
         mapDialog.resizeToLeftTop(length+base);
     }
-    else if(xgi < 0 && ygi > length){
+    else if(xgi < 0 && ygi >= length){
         mapDialog.resizeToRightBottom(length+base);
     }
     else if(xgi < 0){
         mapDialog.resizeToLeftBottom(length+base);
     }
-    else if(xgi > length){
+    else if(xgi >= length){
         mapDialog.resizeToRightTop(length+base);
     }
     else if(ygi < 0){
         mapDialog.resizeToLeftTop(length+base);
     }
-    else if(ygi > length){
+    else if(ygi >= length){
         mapDialog.resizeToRightBottom(length+base);
     }
 }
