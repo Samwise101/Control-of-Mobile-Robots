@@ -28,14 +28,6 @@
 #include <iostream>
 #include <memory>
 
-typedef struct robot_motion{
-    double rot_speed;
-    double u_rot;
-    double trans_speed;
-    double u_trans;
-}robot_motion;
-
-
 class ROBOT_EXPORT Robot
 {
 public:
@@ -68,10 +60,6 @@ public:
 
     void setTranslationSpeed(int mmpersec);
 
-    void robot_odometry(TKobukiData &Kobuki_data, bool useGyro, RobotCoordRotation& robotCoord);
-
-    robot_motion robot_movement_reg(double setX, double setY, RobotCoordRotation& robotCoord);
-
     void setRotationSpeed(double radpersec);
     void setArcSpeed(int mmpersec,int radius);
 
@@ -84,20 +72,6 @@ public:
     }
 private:
 
-    double l = 0.0;
-    double lr = 0.0;
-    double ll = 0.0;
-
-    int alphak_new = 0;
-    bool missionStarted;
-    double old_speed = 0.0;
-    bool high_setpoint_angle;
-
-    double integ = 0.0;
-
-    bool robotStarted = true;
-    unsigned short encl_new = 0;
-    unsigned short encr_new = 0;
     long double tickToMeter = 0.000085292090497737556558; // [m/tick]
     long double b = 0.23; // wheelbase distance in meters, from kobuki manual https://yujinrobot.github.io/kobuki/doxygen/enAppendixProtocolSpecification.html
     //

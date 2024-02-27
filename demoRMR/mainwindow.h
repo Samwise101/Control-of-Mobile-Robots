@@ -21,7 +21,10 @@
 #include "opencv2/core/utility.hpp"
 #include "opencv2/videoio.hpp"
 #include "opencv2/imgcodecs.hpp"
+#include "CKobuki.h"
 #include "robot.h"
+#include "odometry.h"
+#include "regulator.h"
 #include <memory.h>
 #include <QMessageBox>
 #include <QJoysticks.h>
@@ -33,6 +36,7 @@ typedef struct robot_connect_data{
     int lidar_port_me;
     std::string robot_ip;
     std::string camera_port;
+    std::string camera_link;
 }robot_connect_data;
 
 typedef struct SetPoint{
@@ -83,9 +87,8 @@ private slots:
     void on_pushButton_4_clicked();
 
     void on_pushButton_clicked();
-    void getNewFrame();
 
-    void on_robotIP_returnPressed();
+    void getNewFrame();
 
     void on_startMissionButton_clicked();
 
@@ -112,6 +115,10 @@ private:
      QJoysticks *instance;
 
      RobotCoordRotation robotCoord;
+     robot_motion robot_motion_param{0.0, 0.65, 0.0, 0.4, 0.1};
+
+     odometry robot_odometry;
+     Regulator robot_motion_reg;
 
      double forwardspeed;//mm/s
      double rotationspeed;//omega/s

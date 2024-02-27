@@ -59,19 +59,37 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="robotIP">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>162</width>
-          <height>0</height>
-         </size>
-        </property>
+       <widget class="QComboBox" name="comboBox">
+        <item>
+         <property name="text">
+          <string>127.0.0.1</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>192.168.1.11</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>192.168.1.12</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>192.168.1.13</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>192.168.1.14</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>192.168.1.15</string>
+         </property>
+        </item>
        </widget>
       </item>
       <item>

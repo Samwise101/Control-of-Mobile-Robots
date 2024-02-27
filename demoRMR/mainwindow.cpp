@@ -112,14 +112,14 @@ void MainWindow::setUiValues(double robotX,double robotY,double robotFi)
 
 int MainWindow::processThisRobot(TKobukiData robotdata)
 {
-    robot.robot_odometry(robotdata, true, robotCoord);
+    robot_odometry.robot_odometry(robotdata, true, robotCoord);
 
     if(mission_started && !set_point.xn.empty()){
 
-        robot_motion robot_movement = robot.robot_movement_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1], robotCoord);
+        robot_motion_reg.robot_movement_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1], robotCoord, robot_motion_param);
 
-        forwardspeed = robot_movement.trans_speed;
-        rotationspeed = robot_movement.rot_speed;
+        forwardspeed = robot_motion_param.trans_speed;
+        rotationspeed = robot_motion_param.rot_speed;
 
         std::cout << "Speed = " << forwardspeed << std::endl;
 
@@ -144,10 +144,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
             robot.setArcSpeed(forwardspeed, 0);
     }
     else{
-        if(forwardspeed > 0)
-            forwardspeed -= 2.5;
-        if(forwardspeed < 0)
-            forwardspeed = 0;
+        forwardspeed = 0;
         robot.setArcSpeed(forwardspeed, 0);
     }
 
@@ -203,31 +200,21 @@ void MainWindow::on_startButton_clicked() //start button
     forwardspeed=0;
     rotationspeed=0;
 
-//    if(isValidIpAddress(ui->robotIP->text().toStdString())){
-//        robot_data.robot_ip = ui->robotIP->text().toStdString();
-//        std::cout << "Correct ip" << std::endl;
-//    }
-//    else{
-//        std::cout << "Incorrect ip" << std::endl;
-//        QMessageBox msgBox;
-//        msgBox.setWindowTitle("IP address error");
-//        msgBox.setText("Provided IP address is incorrect");
-//        msgBox.setStandardButtons(QMessageBox::Ok);
-//        if(msgBox.exec() == QMessageBox::Ok){
-//            return;
-//        }s
-//    }
+    if(isValidIpAddress(ui->comboBox->currentText().toStdString())){
+        robot_data.robot_ip = ui->comboBox->currentText().toStdString();
+        std::cout << "Correct ip" << std::endl;
+    }
+    else{
+        robot_data.robot_ip = "127.0.0.1";
+    }
 
+    robot_data.camera_link = "http://" + robot_data.robot_ip + ":"+robot_data.camera_port + "/stream.mjpg";
 
-    std::string camera_link = "http://" + robot_data.robot_ip + ":"+robot_data.camera_port + "/stream.mjpg";
-    //tu sa nastartuju vlakna ktore citaju data z lidaru a robota
-      /*  laserthreadID=pthread_create(&laserthreadHandle,NULL,&laserUDPVlakno,(void *)this);
-      robotthreadID=pthread_create(&robotthreadHandle,NULL,&robotUDPVlakno,(void *)this);*/
     connect(this,SIGNAL(uiValuesChanged(double,double,double)),this,SLOT(setUiValues(double,double,double)));
 
     robot.setLaserParameters(robot_data.robot_ip,robot_data.lidar_port,robot_data.lidar_port_me,/*[](LaserMeasurement dat)->int{std::cout<<"som z lambdy callback"<<std::endl;return 0;}*/std::bind(&MainWindow::processThisLidar,this,std::placeholders::_1));
     robot.setRobotParameters(robot_data.robot_ip,robot_data.robot_port,robot_data.robot_port_me,std::bind(&MainWindow::processThisRobot,this,std::placeholders::_1));
-    robot.setCameraParameters(camera_link,std::bind(&MainWindow::processThisCamera,this,std::placeholders::_1));
+    robot.setCameraParameters(robot_data.camera_link,std::bind(&MainWindow::processThisCamera,this,std::placeholders::_1));
 
     robot.robotStart();
     emit uiValuesChanged(robotCoord.x, robotCoord.y, robotCoord.a);
@@ -317,26 +304,6 @@ void MainWindow::getNewFrame()
 {
 
 }
-
-void MainWindow::on_robotIP_returnPressed()
-{
-    if(ui->robotIP->text().isEmpty())
-        return;
-
-    if(isValidIpAddress(ui->robotIP->text().toStdString())){
-        robot_data.robot_ip = ui->robotIP->text().toStdString();
-        std::cout << "Correct ip" << std::endl;
-    }
-    else{
-        std::cout << "Incorrect ip" << std::endl;
-        QMessageBox msgBox;
-        msgBox.setWindowTitle("IP address error");
-        msgBox.setText("Provided IP address is incorrect");
-        msgBox.setStandardButtons(QMessageBox::Ok);
-        msgBox.exec();
-    }
-}
-
 
 void MainWindow::on_startMissionButton_clicked()
 {

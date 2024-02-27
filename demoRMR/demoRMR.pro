@@ -58,8 +58,12 @@ win32 {
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+        odometry.cpp \
+        regulator.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    odometry.h \
+    regulator.h
 
 FORMS    += mainwindow.ui

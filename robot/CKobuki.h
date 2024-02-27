@@ -44,13 +44,6 @@ typedef struct
 
 }TRawGyroData;
 
-typedef struct
-{
-    double x;
-    double y;
-    double a;
-
-}RobotCoordRotation;
 
 typedef struct
 {
