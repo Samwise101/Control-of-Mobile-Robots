@@ -332,12 +332,12 @@ robot_motion Robot::robot_movement_reg(double setX, double setY, RobotCoordRotat
     robot_motion robot{0.0,0.65,0.0,0.3};
 
     double treshHold = 0.05;
-    double rot_dead_zone = 45;
+    double rot_dead_zone = 45.0;
 
     double ex = (setX - robotCoord.x)*1000.0;
     double ey = (setY - robotCoord.y)*1000.0;
 
-    treshHold = treshHold *1000.0;
+    treshHold = treshHold * 1000.0;
 
     double eRot = std::atan2(ey,ex) - robotCoord.a*TO_RADIANS;
     eRot = std::atan2(std::sin(eRot), std::cos(eRot));

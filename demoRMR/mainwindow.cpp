@@ -113,6 +113,9 @@ void MainWindow::paintEvent(QPaintEvent *event)
                     painter.drawEllipse(QPoint(xp, yp),2,2);
 
                 lidarDist*=2;
+                if(lidarDist > 300.0 && k%6 != 0)
+                    continue;
+
                 xp = (robotX + lidarDist*sin((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+realTheta));
                 yp = (robotY + lidarDist*cos((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+realTheta));
 
@@ -122,19 +125,17 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 if(abs(robotX/2 - xp) < 35 || abs(robotX/2 - xp) < 35){
                     continue;
                 }
-                else if(lidarDist <= 300.0 && k%6 == 0){
-                    auto bl = mapDialog.getBaseLength();
-                    xp += bl;
-                    yp += bl;
-                    auto l = mapDialog.getLength();
-                    std::cout << "xp=" << xp << ", yp=" << yp << ", length=" << l << ", bl=" << bl << std::endl;
+
+                auto bl = mapDialog.getBaseLength();
+                xp += bl;
+                yp += bl;
+                auto l = mapDialog.getLength();
+                std::cout << "xp=" << xp << ", yp=" << yp << ", length=" << l << ", bl=" << bl << std::endl;
                     // Treba otestovat resize
-                    if(xp < 0 || xp >= l || yp < 0 || yp >= l){
-                        mapDialog.resizeMapGrid(l+bl);
-                    }
-                    else
-                        mapDialog.writeToGrid(xp,yp);
-                }
+                if(xp < 0 || xp >= l || yp < 0 || yp >= l)
+                    mapDialog.resizeMapGrid(l+bl);
+                else
+                    mapDialog.writeToGrid(xp,yp);
             }
         }
     }
