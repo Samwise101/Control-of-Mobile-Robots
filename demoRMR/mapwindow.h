@@ -16,10 +16,7 @@ public:
     explicit mapWindow(QWidget *parent = nullptr);
     ~mapWindow();
 
-    void resizeToLeftTop(double newLength);
-    void resizeToRightTop(double newLength);
-    void resizeToLeftBottom(double newLength);
-    void resizeToRightBottom(double newLength);
+    void resizeMapGrid(double newLength);
 
     double &getBaseLength();
 

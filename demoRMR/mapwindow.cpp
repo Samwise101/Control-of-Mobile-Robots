@@ -6,7 +6,7 @@ mapWindow::mapWindow(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::mapWindow)
 {
-    length = 1000.0;
+    length = 500.0;
     baseLength = length/2;
     map.resize(length);
     for(int i = 0; i < length; i++){
@@ -20,14 +20,14 @@ mapWindow::~mapWindow()
     delete ui;
 }
 
-void mapWindow::resizeToLeftBottom(double newLength)
+void mapWindow::resizeMapGrid(double newLength)
 {
     map.resize(newLength);
     for(int i = 0; i < newLength; i++){
         map[i].resize(newLength,0);
     }
 
-    auto l = newLength - length;
+    auto l = (newLength - length)/2;
 
     for(int i = length-1; i >= 0; i--){
         for(int j = 0; j < length; j++){
@@ -37,48 +37,10 @@ void mapWindow::resizeToLeftBottom(double newLength)
     }
 
     length = newLength;
-    baseLength = l;
+    baseLength = length/2;
 }
 
-void mapWindow::resizeToLeftTop(double newLength)
-{
-    map.resize(newLength);
-    for(int i = 0; i < newLength; i++){
-        map[i].resize(newLength,0);
-    }
 
-    auto l = newLength - length;
-
-    for(int i = 0; i < length; i++){
-        for(int j = length-1; j >= 0; j--){
-            map[i][j+l] = map[i][j];
-            map[i][j] = 0;
-        }
-    }
-
-    length = newLength;
-    baseLength = l;
-}
-
-void mapWindow::resizeToRightBottom(double newLength)
-{
-    map.resize(newLength);
-    for(int i = 0; i < newLength; i++){
-        map[i].resize(newLength,0);
-    }
-
-    auto l = newLength - length;
-
-    for(int i = length-1; i >=0; i--){
-        for(int j = 0; j < length; j++){
-            map[i+l][j] = map[i][j];
-            map[i][j] = 0;
-        }
-    }
-
-    length = newLength;
-    baseLength = l;
-}
 
 double &mapWindow::getBaseLength()
 {
@@ -93,16 +55,6 @@ void mapWindow::writeToGrid(int& xgi, int& ygi)
     map[xgi][ygi] = 1;
 }
 
-void mapWindow::resizeToRightTop(double newLength)
-{
-    map.resize(newLength);
-    for(int i = 0; i < newLength; i++){
-        map[i].resize(newLength,0);
-    }
-    auto l = newLength - length;
-    length = newLength;
-    baseLength = l;
-}
 
 std::vector<std::vector<int>>& mapWindow::getMap()
 {
@@ -126,18 +78,21 @@ void mapWindow::paintEvent(QPaintEvent *event)
     QPen pen;
     pen.setStyle(Qt::SolidLine);
     pen.setWidth(3);
-    pen.setColor(Qt::black);
+    pen.setColor(Qt::white);
 
     QRect rect(10,10,length+10,length+10);
     rect= ui->frame->geometry();
     rect.translate(0,15);
     painter.drawRect(rect);
 
+    painter.setBrush(Qt::black);
+    pen.setColor(Qt::black);
+
     for(int i = 0; i < map.size(); i++){
         for(int j = 0; j < map[i].size();j++){
             if(map[i][j]==1){
-                int x =  50+i/2;
-                int y =  150+j/2;
+                int x =  100+i/2;
+                int y = 100+j/2;
                 painter.drawEllipse(QPoint(x,y),2,2);
             }
         }

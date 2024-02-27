@@ -26,6 +26,8 @@
 #include <QMessageBox>
 #include <QJoysticks.h>
 #include "mapwindow.h"
+#include <QtCore>
+#include "mapthread.h"
 
 typedef struct robot_connect_data{
     int robot_port;
@@ -67,8 +69,6 @@ public:
     int processThisRobot(TKobukiData robotdata);
 
     void set_robot_connect_data();
-
-    void resizeMapGrid(int& xgi, int& ygi, double& base, double& length);
 
 int processThisCamera(cv::Mat cameraData);
 
@@ -120,10 +120,13 @@ private:
 
      RobotCoordRotation robotCoord;
 
+     mapThread map_thread;
+
      double forwardspeed;//mm/s
      double rotationspeed;//omega/s
 public slots:
      void setUiValues(double robotX,double robotY,double robotFi);
+     void onSetLaserData(LaserMeasurement& copyOfLaserData);
 signals:
      void uiValuesChanged(double newrobotX,double newrobotY,double newrobotFi); ///toto nema telo
 };

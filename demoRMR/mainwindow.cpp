@@ -27,6 +27,8 @@ MainWindow::MainWindow(QWidget *parent) :
     robotCoord.x = 0.0;
     robotCoord.y = 0.0;
 
+    connect(&map_thread, SIGNAL(setLaserData(LaserMeasurement&)), this, SLOT(onSetLaserData(LaserMeasurement &)));
+
     datacounter=0;
 }
 
@@ -125,10 +127,10 @@ void MainWindow::paintEvent(QPaintEvent *event)
                     xp += bl;
                     yp += bl;
                     auto l = mapDialog.getLength();
-                    std::cout << "xp=" << xp << ", yp=" << yp << ", length=" << l << std::endl;
+                    std::cout << "xp=" << xp << ", yp=" << yp << ", length=" << l << ", bl=" << bl << std::endl;
                     // Treba otestovat resize
                     if(xp < 0 || xp >= l || yp < 0 || yp >= l){
-                        resizeMapGrid(xp,yp,bl,l);
+                        mapDialog.resizeMapGrid(l+bl);
                     }
                     else
                         mapDialog.writeToGrid(xp,yp);
@@ -143,6 +145,14 @@ void MainWindow::setUiValues(double robotX,double robotY,double robotFi)
     ui->lineEdit_2->setText(QString::number(robotX,10,6));
     ui->lineEdit_3->setText(QString::number(robotY,10,6));
     ui->lineEdit_4->setText(QString::number(robotFi));
+}
+
+void MainWindow::onSetLaserData(LaserMeasurement &copyOfLaserData)
+{
+    QMutex mux;
+    mux.lock();
+    map_thread.copyOfLaserData = copyOfLaserData;
+    mux.unlock();
 }
 
 
@@ -206,35 +216,6 @@ void MainWindow::set_robot_connect_data()
     robot_data.lidar_port_me = 5299;
     robot_data.camera_port = "8889";
 }
-
-void MainWindow::resizeMapGrid(int& xgi, int& ygi, double& base, double& length)
-{
-    if(xgi < 0 && ygi < 0){
-        mapDialog.resizeToLeftBottom(length+base);
-    }
-    else if(xgi >= length && ygi >= length){
-        mapDialog.resizeToRightTop(length+base);
-    }
-    else if(xgi >= length && ygi < 0){
-        mapDialog.resizeToLeftTop(length+base);
-    }
-    else if(xgi < 0 && ygi >= length){
-        mapDialog.resizeToRightBottom(length+base);
-    }
-    else if(xgi < 0){
-        mapDialog.resizeToLeftBottom(length+base);
-    }
-    else if(xgi >= length){
-        mapDialog.resizeToRightTop(length+base);
-    }
-    else if(ygi < 0){
-        mapDialog.resizeToLeftTop(length+base);
-    }
-    else if(ygi >= length){
-        mapDialog.resizeToRightBottom(length+base);
-    }
-}
-
 
 int MainWindow::processThisLidar(LaserMeasurement laserData)
 {

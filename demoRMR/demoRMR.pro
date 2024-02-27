@@ -59,9 +59,11 @@ win32 {
 
 SOURCES += main.cpp\
         mainwindow.cpp \
+        mapthread.cpp \
         mapwindow.cpp
 
 HEADERS  += mainwindow.h \
+    mapthread.h \
     mapwindow.h
 
 FORMS    += mainwindow.ui \
