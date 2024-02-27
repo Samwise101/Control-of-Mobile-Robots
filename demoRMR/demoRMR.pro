@@ -59,11 +59,14 @@ win32 {
 
 SOURCES += main.cpp\
         mainwindow.cpp \
+        mapping.cpp \
         odometry.cpp \
         regulator.cpp
 
 HEADERS  += mainwindow.h \
+    mapping.h \
     odometry.h \
     regulator.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    mapping.ui

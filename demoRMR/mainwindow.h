@@ -25,6 +25,7 @@
 #include "robot.h"
 #include "odometry.h"
 #include "regulator.h"
+#include "mapping.h"
 #include <memory.h>
 #include <QMessageBox>
 #include <QJoysticks.h>
@@ -94,6 +95,8 @@ private slots:
 
     void on_pushButton_9_clicked();
 
+    void on_pushButton_10_clicked();
+
 private:
      JOYINFO joystickInfo;
      Ui::MainWindow *ui;
@@ -119,6 +122,7 @@ private:
 
      odometry robot_odometry;
      Regulator robot_motion_reg;
+     mapping mapDialog;
 
      double forwardspeed;//mm/s
      double rotationspeed;//omega/s

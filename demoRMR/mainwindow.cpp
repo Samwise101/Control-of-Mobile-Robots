@@ -69,12 +69,25 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
             painter.setPen(pero2);
 
-            int xp = rect.width()/2+rect.topLeft().x()-offsetX;
-            int yp = rect.height()/2+rect.topLeft().y()-offsetY;
-            int centerX = xp+width/2;
-            int centerY = yp+height/2;
+            //            double scale = 1.0;
 
-            if(rect.contains(xp,yp)){
+            //            int robotX = rect.width()/2 + rect.topLeft().x()+ robotCoord.x*100.0;
+            //            int robotY = rect.height()/2 + rect.topLeft().y() - robotCoord.y*100.0;
+            //            double realTheta = robotCoord.a*TO_RADIANS;
+
+            //            painter.drawEllipse(robotX-20*scale, robotY-20*scale, 40*scale, 40*scale);
+            //            painter.drawLine(robotX, robotY, robotX+20*std::cos(realTheta)*scale, robotY-20*std::sin(realTheta)*scale);
+
+            int robotX = 0 + robotCoord.x*100.0;
+            int robotY = 0 - robotCoord.y*100.0;
+            double realTheta = robotCoord.a*TO_RADIANS;
+
+            int x = rect.width()/2+rect.topLeft().x()-offsetX;
+            int y = rect.height()/2+rect.topLeft().y()-offsetY;
+            int centerX = x+width/2;
+            int centerY = y+height/2;
+
+            if(rect.contains(x,y)){
                 painter.drawEllipse((centerX-width/2), (centerY-height/2), width, height);
                 painter.setBrush(Qt::yellow);
                 QPointF *points = new QPointF[3];
@@ -87,16 +100,39 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
             updateLaserPicture=0;
 
-            painter.setPen(pero);
-            painter.setBrush(Qt::black);
-
             for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
             {
-                int dist=copyOfLaserData.Data[k].scanDistance/20;
-                int xp=rect.width()-(rect.width()/2+dist*2*sin((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().x();
-                int yp=rect.height()-(rect.height()/2+dist*2*cos((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().y();
+                int lidarDist=copyOfLaserData.Data[k].scanDistance/20;
+                int xp=rect.width()-(rect.width()/2+lidarDist*2*sin((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().x();
+                int yp=rect.height()-(rect.height()/2+lidarDist*2*cos((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().y();
+
                 if(rect.contains(xp,yp))
                     painter.drawEllipse(QPoint(xp, yp),2,2);
+
+                lidarDist*=2;
+                if(lidarDist > 300.0 && k%6 != 0)
+                    continue;
+
+                xp = (robotX + lidarDist*sin((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+realTheta));
+                yp = (robotY + lidarDist*cos((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+realTheta));
+
+                // if(xp < 0 || yp < 0)
+                //      qDebug() << "x=" << xp << ", yp=" << yp;
+
+                if(abs(robotX/2 - xp) < 35 || abs(robotX/2 - xp) < 35){
+                    continue;
+                }
+
+                auto bl = mapDialog.getBaseLength();
+                xp += bl;
+                yp += bl;
+                auto l = mapDialog.getLength();
+                std::cout << "xp=" << xp << ", yp=" << yp << ", length=" << l << ", bl=" << bl << std::endl;
+                    // Treba otestovat resize
+                if(xp < 0 || xp >= l || yp < 0 || yp >= l)
+                    mapDialog.resizeMapGrid(l+bl);
+                else
+                    mapDialog.writeToGrid(xp,yp);
             }
         }
     }
@@ -120,8 +156,6 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 
         forwardspeed = robot_motion_param.trans_speed;
         rotationspeed = robot_motion_param.rot_speed;
-
-        std::cout << "Speed = " << forwardspeed << std::endl;
 
         if(set_point.xn.empty()){
             mission_started = false;
@@ -330,5 +364,11 @@ void MainWindow::on_pushButton_9_clicked()
 
     set_point.xn.insert(set_point.xn.begin(),ui->xn->text().toDouble());
     set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
+}
+
+
+void MainWindow::on_pushButton_10_clicked()
+{
+    mapDialog.exec();
 }
 
