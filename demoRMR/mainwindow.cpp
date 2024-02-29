@@ -69,18 +69,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
             painter.setPen(pero2);
 
-            //            double scale = 1.0;
-
-            //            int robotX = rect.width()/2 + rect.topLeft().x()+ robotCoord.x*100.0;
-            //            int robotY = rect.height()/2 + rect.topLeft().y() - robotCoord.y*100.0;
-            //            double realTheta = robotCoord.a*TO_RADIANS;
-
-            //            painter.drawEllipse(robotX-20*scale, robotY-20*scale, 40*scale, 40*scale);
-            //            painter.drawLine(robotX, robotY, robotX+20*std::cos(realTheta)*scale, robotY-20*std::sin(realTheta)*scale);
-
-            int robotX = 0 + robotCoord.x*100.0;
-            int robotY = 0 - robotCoord.y*100.0;
-            double realTheta = robotCoord.a*TO_RADIANS;
+            int robotX = 0 + robotCoord.x*1000;
+            int robotY = 0 - robotCoord.y*1000;
 
             int x = rect.width()/2+rect.topLeft().x()-offsetX;
             int y = rect.height()/2+rect.topLeft().y()-offsetY;
@@ -109,15 +99,15 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 if(rect.contains(xp,yp))
                     painter.drawEllipse(QPoint(xp, yp),2,2);
 
-
-                lidarDist *= 2;
-                if(lidarDist > 300.0 && k%6 != 0)
+                if(k%4 != 0)
                     continue;
 
-                xp = (robotX + lidarDist*sin((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+realTheta));
-                yp = (robotY + lidarDist*cos((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+realTheta));
+                lidarDist = lidarDist*2/6;
 
-                std::cout << "x=" << xp << ", yp=" << yp << std::endl;
+                xp = (robotX/60 + lidarDist*sin((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
+                yp = (robotY/60 + lidarDist*cos((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
+
+                //std::cout << "x=" << xp << ", yp=" << yp << std::endl;
 
 //                if(abs(robotX/2 - xp) < 35 || abs(robotX/2 - xp) < 35){
 //                    continue;
@@ -128,7 +118,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 xp += bl;
                 yp += bl;
                 int l = mapDialog.getLength();
-                //std::cout << "xp=" << xp << ", yp=" << yp << ", length=" << l << ", bl=" << bl << std::endl;
+                std::cout << "xp=" << xp << ", yp=" << yp << ", length=" << l << ", bl=" << bl << std::endl;
                     // Treba otestovat resize
                 if(xp < 0 || xp >= l || yp < 0 || yp >= l)
                     mapDialog.resizeMapGrid(l+bl);
