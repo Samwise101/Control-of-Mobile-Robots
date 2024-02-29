@@ -5,7 +5,7 @@ mapping::mapping(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::mapping)
 {
-    length = 500.0;
+    length = 1000;
     baseLength = length/2;
     map.resize(length);
     for(int i = 0; i < length; i++){
@@ -20,7 +20,7 @@ mapping::~mapping()
 }
 
 
-void mapping::resizeMapGrid(double newLength)
+void mapping::resizeMapGrid(int newLength)
 {
     map.resize(newLength);
     for(int i = 0; i < newLength; i++){
@@ -42,7 +42,7 @@ void mapping::resizeMapGrid(double newLength)
 
 
 
-double &mapping::getBaseLength()
+int &mapping::getBaseLength()
 {
     return baseLength;
 }
@@ -61,12 +61,12 @@ std::vector<std::vector<bool>>& mapping::getMap()
     return map;
 }
 
-double mapping::getLength() const
+int mapping::getLength() const
 {
     return length;
 }
 
-void mapping::setLength(double newLength)
+void mapping::setLength(int newLength)
 {
     length = newLength;
 }
@@ -87,6 +87,7 @@ void mapping::paintEvent(QPaintEvent *event)
 
     painter.setBrush(Qt::black);
     pen.setColor(Qt::black);
+
 
     for(int i = 0; i < map.size(); i++){
         for(int j = 0; j < map[i].size();j++){

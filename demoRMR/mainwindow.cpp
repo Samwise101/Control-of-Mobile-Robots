@@ -109,25 +109,26 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 if(rect.contains(xp,yp))
                     painter.drawEllipse(QPoint(xp, yp),2,2);
 
-                lidarDist*=2;
+
+                lidarDist *= 2;
                 if(lidarDist > 300.0 && k%6 != 0)
                     continue;
 
                 xp = (robotX + lidarDist*sin((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+realTheta));
                 yp = (robotY + lidarDist*cos((360.0-(copyOfLaserData.Data[k].scanAngle)+90)*PI/180+realTheta));
 
-                // if(xp < 0 || yp < 0)
-                //      qDebug() << "x=" << xp << ", yp=" << yp;
+                std::cout << "x=" << xp << ", yp=" << yp << std::endl;
 
-                if(abs(robotX/2 - xp) < 35 || abs(robotX/2 - xp) < 35){
-                    continue;
-                }
+//                if(abs(robotX/2 - xp) < 35 || abs(robotX/2 - xp) < 35){
+//                    continue;
+//                }
 
-                auto bl = mapDialog.getBaseLength();
+                int bl = mapDialog.getBaseLength();
+
                 xp += bl;
                 yp += bl;
-                auto l = mapDialog.getLength();
-                std::cout << "xp=" << xp << ", yp=" << yp << ", length=" << l << ", bl=" << bl << std::endl;
+                int l = mapDialog.getLength();
+                //std::cout << "xp=" << xp << ", yp=" << yp << ", length=" << l << ", bl=" << bl << std::endl;
                     // Treba otestovat resize
                 if(xp < 0 || xp >= l || yp < 0 || yp >= l)
                     mapDialog.resizeMapGrid(l+bl);

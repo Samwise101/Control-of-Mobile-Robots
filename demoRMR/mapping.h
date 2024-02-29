@@ -16,24 +16,24 @@ public:
     explicit mapping(QWidget *parent = nullptr);
     ~mapping();
 
-    void resizeMapGrid(double newLength);
+    void resizeMapGrid(int newLength);
 
-    double &getBaseLength();
+    int &getBaseLength();
 
     void writeToGrid(int& xgi, int& ygi);
 
     std::vector<std::vector<bool>>& getMap();
 
-    double getLength() const;
-    void setLength(double newLength);
+    int getLength() const;
+    void setLength(int newLength);
 
 
 private:
     Ui::mapping *ui;
 
     std::vector<std::vector<bool>> map;
-    double length;
-    double baseLength;
+    int length;
+    int baseLength;
 
     void paintEvent(QPaintEvent *event);// Q_DECL_OVERRIDE;
 };
