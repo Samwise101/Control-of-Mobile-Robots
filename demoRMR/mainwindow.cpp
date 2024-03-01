@@ -289,13 +289,11 @@ void MainWindow::on_pushButton_clicked()
     if(useCamera1==true)
     {
         useCamera1=false;
-
         ui->pushButton->setText("use camera");
     }
     else
     {
         useCamera1=true;
-
         ui->pushButton->setText("use laser");
     }
 }
