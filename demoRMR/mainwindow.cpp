@@ -27,13 +27,18 @@ void MainWindow::get_laserdata_and_write_to_map()
         {
             int lidarDist=copyOfLaserData.Data[k].scanDistance/20;
 
-            if(k%4 != 0)
+            if(k%5 != 0)
                 continue;
 
             lidarDist = lidarDist*2/6;
 
             int xp = (robotX/60 + lidarDist*sin((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
             int yp = (robotY/60 + lidarDist*cos((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
+
+            if(abs(xp-robotX/60) < 6 && abs(yp-robotY/60) < 6)
+                continue;
+
+            std::cout << "xp = " << abs(xp-robotX) << ", yp = " << abs(yp-robotY) << std::endl;
 
             int bl = mapDialog.getBaseLength();
 
