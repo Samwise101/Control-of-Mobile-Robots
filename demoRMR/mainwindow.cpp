@@ -121,7 +121,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
         forwardspeed = robot_motion_param.trans_speed;
         rotationspeed = robot_motion_param.rot_speed;
 
-        std::cout << "Speed = " << forwardspeed << std::endl;
+        //std::cout << "Speed = " << forwardspeed << std::endl;
 
         if(set_point.xn.empty()){
             mission_started = false;
@@ -330,5 +330,20 @@ void MainWindow::on_pushButton_9_clicked()
 
     set_point.xn.insert(set_point.xn.begin(),ui->xn->text().toDouble());
     set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
+}
+
+
+void MainWindow::on_pushButton_10_clicked()
+{
+    if(set_point.xn.empty())
+        return;
+
+    set_point.xn.clear();
+    set_point.yn.clear();
+
+
+    mission_started = false;
+    ui->startMissionButton->setText("Start mission");
+
 }
 

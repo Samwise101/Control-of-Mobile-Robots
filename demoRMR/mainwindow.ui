@@ -236,6 +236,13 @@
        </spacer>
       </item>
       <item>
+       <widget class="QPushButton" name="pushButton_10">
+        <property name="text">
+         <string>Abandon Mission</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="startMissionButton">
         <property name="text">
          <string>Start Mission</string>
