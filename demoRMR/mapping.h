@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QPainter>
+#include <memory>
 
 namespace Ui {
 class mapping;
@@ -28,12 +29,19 @@ public:
     void setLength(int newLength);
 
 
+    int getScale() const;
+
+    QPixmap *getPix() const;
+
 private:
     Ui::mapping *ui;
 
     std::vector<std::vector<bool>> map;
     int length;
     int baseLength;
+    int scale;
+
+    QPixmap* pix;
 
     void paintEvent(QPaintEvent *event);// Q_DECL_OVERRIDE;
 };

@@ -1,13 +1,16 @@
 #include "mapping.h"
 #include "ui_mapping.h"
+#include <QGraphicsView>
 
 mapping::mapping(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::mapping)
 {
     length = 200;
+    scale = 6;
     baseLength = length/2;
     map.resize(length);
+
     for(int i = 0; i < length; i++){
         map[i].resize(length,0);
     }
@@ -16,6 +19,7 @@ mapping::mapping(QWidget *parent) :
 
 mapping::~mapping()
 {
+    delete pix;
     delete ui;
 }
 
@@ -71,31 +75,41 @@ void mapping::setLength(int newLength)
     length = newLength;
 }
 
+int mapping::getScale() const
+{
+    return scale;
+}
+
+QPixmap *mapping::getPix() const
+{
+    return pix;
+}
+
 void mapping::paintEvent(QPaintEvent *event)
 {
-    QPainter painter(this);
-    painter.setBrush(Qt::white);
-    QPen pen;
-    pen.setStyle(Qt::SolidLine);
-    pen.setWidth(3);
-    pen.setColor(Qt::white);
+    int h = ui->label->height();
+    int w = ui->label->width();
 
-    QRect rect(10,10,length+10,length+10);
-    rect= ui->frame->geometry();
-    rect.translate(0,15);
-    painter.drawRect(rect);
+    pix = new QPixmap(w, h);
+    QPainter paint(pix);
+    pix->fill( Qt::white);
+    paint.setPen(Qt::black);
+    paint.setBrush(Qt::black);
 
-    painter.setBrush(Qt::black);
-    pen.setColor(Qt::black);
-
+    int x{};
+    int y{};
 
     for(int i = 0; i < map.size(); i++){
         for(int j = 0; j < map[i].size();j++){
             if(map[i][j]==1){
-                int x = 150+i*2;
-                int y = 150+j*2;
-                painter.drawEllipse(QPoint(x,y),2,2);
+                x = i*3;
+                y = j*3+100;
+                paint.drawEllipse(QPoint(x,y),2,2);
             }
         }
     }
+
+
+    paint.end();
+    ui->label->setPixmap(*pix);
 }

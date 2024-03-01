@@ -307,8 +307,6 @@ void MainWindow::on_pushButton_4_clicked() //stop
 }
 
 
-
-
 void MainWindow::on_pushButton_clicked()
 {
     if(useCamera1==true)
@@ -360,6 +358,21 @@ void MainWindow::on_pushButton_9_clicked()
 
 void MainWindow::on_pushButton_10_clicked()
 {
+    QFile file("map.png");
     mapDialog.exec();
+    mapDialog.getPix()->save(&file, "PNG");
+}
+
+
+void MainWindow::on_pushButton_11_clicked()
+{
+    if(set_point.xn.empty())
+        return;
+
+    set_point.xn.clear();
+    set_point.yn.clear();
+
+    mission_started = false;
+    ui->startMissionButton->setText("Start mission");
 }
 
