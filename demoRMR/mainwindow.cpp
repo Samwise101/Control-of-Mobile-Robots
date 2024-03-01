@@ -3,6 +3,53 @@
 #include <QPainter>
 #include <math.h>
 #include <regex>
+#include <thread>
+#include <chrono>
+
+
+void MainWindow::get_laserdata_and_write_to_map()
+{
+    while(1){
+
+        mux.lock();
+        if(isStoped){
+            std::cout << "Exiting mapping thread" << std::endl;
+            return;
+        }
+        else if(!canStart)
+            continue;
+        mux.unlock();
+
+        int robotX = 0 + robotCoord.x*1000;
+        int robotY = 0 - robotCoord.y*1000;
+
+        for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
+        {
+            int lidarDist=copyOfLaserData.Data[k].scanDistance/20;
+
+            if(k%4 != 0)
+                continue;
+
+            lidarDist = lidarDist*2/6;
+
+            int xp = (robotX/60 + lidarDist*sin((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
+            int yp = (robotY/60 + lidarDist*cos((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
+
+            int bl = mapDialog.getBaseLength();
+
+            xp += bl;
+            yp += bl;
+            int l = mapDialog.getLength();
+            if(xp < 0 || xp >= l || yp < 0 || yp >= l)
+                mapDialog.resizeMapGrid(l+bl);
+            else
+                mapDialog.writeToGrid(xp,yp);
+        }
+
+        this_thread::sleep_for(500ms);
+    }
+}
+
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -27,10 +74,13 @@ MainWindow::MainWindow(QWidget *parent) :
     robotCoord.y = 0.0;
 
     datacounter=0;
+    canStart = false;
 }
 
 MainWindow::~MainWindow()
 {
+    isStoped = true;
+    mappingThread.join();
     delete ui;
 }
 
@@ -69,9 +119,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
             painter.setPen(pero2);
 
-            int robotX = 0 + robotCoord.x*1000;
-            int robotY = 0 - robotCoord.y*1000;
-
             int x = rect.width()/2+rect.topLeft().x()-offsetX;
             int y = rect.height()/2+rect.topLeft().y()-offsetY;
             int centerX = x+width/2;
@@ -90,6 +137,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
             updateLaserPicture=0;
 
+            mux2.lock();
             for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
             {
                 int lidarDist=copyOfLaserData.Data[k].scanDistance/20;
@@ -98,33 +146,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
                 if(rect.contains(xp,yp))
                     painter.drawEllipse(QPoint(xp, yp),2,2);
-
-                if(k%4 != 0)
-                    continue;
-
-                lidarDist = lidarDist*2/6;
-
-                xp = (robotX/60 + lidarDist*sin((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
-                yp = (robotY/60 + lidarDist*cos((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
-
-                //std::cout << "x=" << xp << ", yp=" << yp << std::endl;
-
-//                if(abs(robotX/2 - xp) < 35 || abs(robotX/2 - xp) < 35){
-//                    continue;
-//                }
-
-                int bl = mapDialog.getBaseLength();
-
-                xp += bl;
-                yp += bl;
-                int l = mapDialog.getLength();
-                std::cout << "xp=" << xp << ", yp=" << yp << ", length=" << l << ", bl=" << bl << std::endl;
-                    // Treba otestovat resize
-                if(xp < 0 || xp >= l || yp < 0 || yp >= l)
-                    mapDialog.resizeMapGrid(l+bl);
-                else
-                    mapDialog.writeToGrid(xp,yp);
             }
+            mux2.unlock();
         }
     }
 }
@@ -251,6 +274,11 @@ void MainWindow::on_startButton_clicked() //start button
         [this]( const int js, const int axis, const qreal value) { if(/*js==0 &&*/ axis==1){forwardspeed=-value*300;}
             if(/*js==0 &&*/ axis==0){rotationspeed=-value*(3.14159/2.0);}}
     );
+
+    isStoped = false;
+    std::function<void(void)> f =std::bind(&MainWindow::get_laserdata_and_write_to_map,this);
+    mappingThread=std::move(std::thread(f));
+    canStart = true;
 }
 
 void MainWindow::on_pushButton_2_clicked() //forward

@@ -30,6 +30,10 @@
 #include <QMessageBox>
 #include <QJoysticks.h>
 #include <QFile>
+#include <QDebug>
+
+#include <thread>
+#include <mutex>
 
 typedef struct robot_connect_data{
     int robot_port;
@@ -73,6 +77,8 @@ public:
 
     void set_robot_connect_data();
 
+    void get_laserdata_and_write_to_map();
+
 int processThisCamera(cv::Mat cameraData);
 
 private slots:
@@ -114,9 +120,15 @@ private:
      int datacounter;
      QTimer *timer;
 
+     std::atomic_bool isStoped;
+     std::atomic_bool canStart;
+
      bool mission_started;
 
      SetPoint set_point;
+
+     std::mutex mux;
+     std::mutex mux2;
 
      QJoysticks *instance;
 
@@ -126,6 +138,8 @@ private:
      odometry robot_odometry;
      Regulator robot_motion_reg;
      mapping mapDialog;
+
+     std::thread mappingThread;
 
      double forwardspeed;//mm/s
      double rotationspeed;//omega/s
