@@ -10,48 +10,43 @@
 void MainWindow::get_laserdata_and_write_to_map()
 {
     while(1){
-
-        mux.lock();
         if(isStoped){
             std::cout << "Exiting mapping thread" << std::endl;
             return;
         }
         else if(!canStart)
             continue;
-        mux.unlock();
 
-        int robotX = 0 + robotCoord.x*1000;
-        int robotY = 0 - robotCoord.y*1000;
+        int robotX = robotCoord.x*10;
+        int robotY = -robotCoord.y*10;
 
-        for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
+        for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k+=2)
         {
             int lidarDist=copyOfLaserData.Data[k].scanDistance/20;
 
-            if(k%5 != 0)
-                continue;
+            lidarDist = lidarDist*20/100;
 
-            lidarDist = lidarDist*2/6;
+            int xp = (robotX+ lidarDist*sin((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
+            int yp = (robotY + lidarDist*cos((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
 
-            int xp = (robotX/60 + lidarDist*sin((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
-            int yp = (robotY/60 + lidarDist*cos((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
-
-            if(abs(xp-robotX/60) < 6 && abs(yp-robotY/60) < 6)
-                continue;
-
-            std::cout << "xp = " << abs(xp-robotX) << ", yp = " << abs(yp-robotY) << std::endl;
+//            if(abs(xp-robotX/100) < 6 && abs(yp-robotY/100) < 6)
+//                continue;
 
             int bl = mapDialog.getBaseLength();
 
             xp += bl;
             yp += bl;
             int l = mapDialog.getLength();
+
+            std::cout << "xp = " << abs(xp-robotX) << ", yp = " << abs(yp-robotY) << ", mapLegth = " << l << std::endl;
+
             if(xp < 0 || xp >= l || yp < 0 || yp >= l)
                 mapDialog.resizeMapGrid(l+bl);
             else
                 mapDialog.writeToGrid(xp,yp);
         }
 
-        this_thread::sleep_for(500ms);
+        this_thread::sleep_for(2000ms);
     }
 }
 
@@ -272,18 +267,21 @@ void MainWindow::on_startButton_clicked() //start button
     robot.robotStart();
     emit uiValuesChanged(robotCoord.x, robotCoord.y, robotCoord.a);
 
-    instance = QJoysticks::getInstance();
+//    instance = QJoysticks::getInstance();
 
-    connect(
-        instance, &QJoysticks::axisChanged,
-        [this]( const int js, const int axis, const qreal value) { if(/*js==0 &&*/ axis==1){forwardspeed=-value*300;}
-            if(/*js==0 &&*/ axis==0){rotationspeed=-value*(3.14159/2.0);}}
-    );
+//    connect(
+//        instance, &QJoysticks::axisChanged,
+//        [this]( const int js, const int axis, const qreal value) { if(/*js==0 &&*/ axis==1){forwardspeed=-value*300;}
+//            if(/*js==0 &&*/ axis==0){rotationspeed=-value*(3.14159/2.0);}}
+//    );
 
+    mutex mux;
+    mux.lock();
     isStoped = false;
     std::function<void(void)> f =std::bind(&MainWindow::get_laserdata_and_write_to_map,this);
     mappingThread=std::move(std::thread(f));
     canStart = true;
+    mux.unlock();
 }
 
 void MainWindow::on_pushButton_2_clicked() //forward
@@ -392,8 +390,10 @@ void MainWindow::on_pushButton_9_clicked()
 void MainWindow::on_pushButton_10_clicked()
 {
     QFile file("map.png");
+    mutex mux;
+
     mapDialog.exec();
-    mapDialog.getPix()->save(&file, "PNG");
+    //mapDialog.getPix()->save(&file, "PNG");
 }
 
 

@@ -40,6 +40,8 @@ private:
     int length;
     int baseLength;
     int scale;
+    int h;
+    int w;
 
     QPixmap* pix;
 

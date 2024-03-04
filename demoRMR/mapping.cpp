@@ -1,20 +1,29 @@
 #include "mapping.h"
 #include "ui_mapping.h"
 #include <QGraphicsView>
+#include <iostream>
 
 mapping::mapping(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::mapping)
 {
-    length = 200;
-    scale = 6;
+    length = 140;
+    scale = 4;
     baseLength = length/2;
     map.resize(length);
+
+    h = 0;
+    w = 0;
 
     for(int i = 0; i < length; i++){
         map[i].resize(length,0);
     }
     ui->setupUi(this);
+
+    h = ui->label->height();
+    w = ui->label->width();
+    std::cout << "height=" << h << ", width=" << w << std::endl;
+    pix = new QPixmap(w,h);
 }
 
 mapping::~mapping()
@@ -87,10 +96,6 @@ QPixmap *mapping::getPix() const
 
 void mapping::paintEvent(QPaintEvent *event)
 {
-    int h = ui->label->height();
-    int w = ui->label->width();
-
-    pix = new QPixmap(w, h);
     QPainter paint(pix);
     pix->fill( Qt::white);
     paint.setPen(Qt::black);
@@ -102,8 +107,8 @@ void mapping::paintEvent(QPaintEvent *event)
     for(int i = 0; i < map.size(); i++){
         for(int j = 0; j < map[i].size();j++){
             if(map[i][j]==1){
-                x = i*3;
-                y = j*3+100;
+                x = i*scale;
+                y = j*scale+100;
                 paint.drawEllipse(QPoint(x,y),2,2);
             }
         }

@@ -13,7 +13,7 @@ Regulator::Regulator()
 void Regulator::robot_movement_reg(const double& setX, const double& setY, const RobotCoordRotation &robotCoord, robot_motion& robot_motion_param)
 {
     double treshHold = 0.05;
-    double rot_dead_zone = 45;
+    double rot_dead_zone = PI/4;
 
     double ex = (setX - robotCoord.x)*1000.0;
     double ey = (setY - robotCoord.y)*1000.0;
@@ -38,7 +38,7 @@ void Regulator::robot_movement_reg(const double& setX, const double& setY, const
     else if (integ < -25.0)
         integ = -25.0;
 
-    if(eRot < rot_dead_zone*TO_RADIANS && eRot > -rot_dead_zone*TO_RADIANS){
+    if(eRot < rot_dead_zone && eRot > -rot_dead_zone){
 
         robot_motion_param.trans_speed = robot_motion_param.u_trans*eDist + robot_motion_param.u_integral*integ;
 

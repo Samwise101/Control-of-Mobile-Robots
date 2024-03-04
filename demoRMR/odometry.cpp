@@ -8,7 +8,7 @@ odometry::odometry()
     missionStarted = false;
 }
 
-void odometry::robot_odometry(TKobukiData Kobuki_data, bool useGyro, RobotCoordRotation& robotCoord)
+void odometry::robot_odometry(const TKobukiData& Kobuki_data, bool useGyro, RobotCoordRotation& robotCoord)
 {
     int encl_old{0};
     int encr_old{0};
