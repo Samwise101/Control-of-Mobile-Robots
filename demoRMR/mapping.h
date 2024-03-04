@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QPainter>
 #include <memory>
+#include <QFile>
 
 namespace Ui {
 class mapping;
@@ -42,6 +43,8 @@ private:
     int scale;
     int h;
     int w;
+
+    QFile file;
 
     QPixmap* pix;
 

@@ -390,10 +390,8 @@ void MainWindow::on_pushButton_9_clicked()
 void MainWindow::on_pushButton_10_clicked()
 {
     QFile file("map.png");
-    mutex mux;
-
     mapDialog.exec();
-    //mapDialog.getPix()->save(&file, "PNG");
+    mapDialog.getPix()->save(&file, "PNG");
 }
 
 
