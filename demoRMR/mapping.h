@@ -22,7 +22,7 @@ public:
 
     int &getBaseLength();
 
-    void writeToGrid(int xgi, int ygi);
+    void writeToGrid(double xgi, double ygi);
 
     std::vector<std::vector<bool>>& getMap();
 

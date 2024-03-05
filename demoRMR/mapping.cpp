@@ -8,7 +8,7 @@ mapping::mapping(QWidget *parent) :
     ui(new Ui::mapping)
 {
     length = 200;
-    scale = 2;
+    scale = 4;
     baseLength = length/2;
     map.resize(length);
 
@@ -60,9 +60,9 @@ int &mapping::getBaseLength()
     return baseLength;
 }
 
-void mapping::writeToGrid(int xgi, int ygi)
+void mapping::writeToGrid(double xgi, double ygi)
 {
-    map[xgi][ygi] = true;
+    map[(int)xgi][(int)ygi] = true;
 }
 
 
@@ -104,9 +104,9 @@ void mapping::paintEvent(QPaintEvent *event)
     for(int i = 0; i < map.size(); i++){
         for(int j = 0; j < map[i].size();j++){
             if(map[i][j]==1){
-                x = i*scale;
+                x = i*scale-50;
                 y = j*scale+100;
-                paint.drawEllipse(QPoint(x,y),1,1);
+                paint.drawEllipse(QPoint(x,y),2,2);
             }
         }
     }

@@ -22,15 +22,19 @@ void MainWindow::get_laserdata_and_write_to_map()
 
         for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k+=2)
         {
-            int lidarDist=copyOfLaserData.Data[k].scanDistance/20;
+            double lidarDist=copyOfLaserData.Data[k].scanDistance/20;
 
-            if(lidarDist > 300)
+            std::cout << "Lidar dist = " << lidarDist << std::endl;
+
+            if(lidarDist > 200)
                 continue;
 
             lidarDist = lidarDist*20/100;
 
-            int xp = (robotX+ lidarDist*sin((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
-            int yp = (robotY + lidarDist*cos((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
+            double xp = (robotX+ lidarDist*sin((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
+            double yp = (robotY + lidarDist*cos((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
+
+           // std::cout << "xp = " << abs(xp-robotX) << ", yp = " << abs(yp-robotY) << std::endl;
 
             if(abs(xp-robotX) < 3 && abs(yp-robotY) < 3)
                 continue;
@@ -40,8 +44,6 @@ void MainWindow::get_laserdata_and_write_to_map()
             xp += bl;
             yp += bl;
             int l = mapDialog.getLength();
-
-            std::cout << "xp = " << abs(xp-robotX) << ", yp = " << abs(yp-robotY) << ", mapLegth = " << l << std::endl;
 
             if(xp < 0 || xp >= l || yp < 0 || yp >= l)
                 mapDialog.resizeMapGrid(l+bl);
