@@ -34,6 +34,7 @@
 
 #include <thread>
 #include <mutex>
+#include <future>
 
 typedef struct robot_connect_data{
     int robot_port;
@@ -77,7 +78,7 @@ public:
 
     void set_robot_connect_data();
 
-    void get_laserdata_and_write_to_map();
+    void get_laserdata_and_write_to_map(double robotX, double robotY, double robotA);
 
 int processThisCamera(cv::Mat cameraData);
 
@@ -119,6 +120,13 @@ private:
      robot_connect_data robot_data;
      int datacounter;
      QTimer *timer;
+     double robotX;
+     double robotY;
+     double robotAngle;
+
+     std::function<void()> f;
+
+     bool isRotating;
 
      std::atomic_bool isStoped;
      std::atomic_bool canStart;

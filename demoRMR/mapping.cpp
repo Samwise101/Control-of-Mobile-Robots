@@ -105,7 +105,7 @@ void mapping::paintEvent(QPaintEvent *event)
         for(int j = 0; j < map[i].size();j++){
             if(map[i][j]==1){
                 x = i*scale-50;
-                y = j*scale+100;
+                y = j*scale-100;
                 paint.drawEllipse(QPoint(x,y),2,2);
             }
         }

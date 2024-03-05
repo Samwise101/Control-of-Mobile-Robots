@@ -7,37 +7,26 @@
 #include <chrono>
 
 
-void MainWindow::get_laserdata_and_write_to_map()
+void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, double robotA)
 {
-    while(1){
-        if(isStoped){
-            std::cout << "Exiting mapping thread" << std::endl;
-            return;
-        }
-        else if(!canStart)
-            continue;
 
-        int robotX = robotCoord.x*10;
-        int robotY = -robotCoord.y*10;
+    std::cout << "X=" << robotX << ", Y=" << robotY << ", A=" << robotA << std::endl;
+    double robotX2 = robotX;
+    double robotY2 = robotY;
+    double robotAngle = robotA;
 
+    //mux2.lock();
         for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k+=2)
         {
-            double lidarDist=copyOfLaserData.Data[k].scanDistance/20;
+            double lidarDist=copyOfLaserData.Data[k].scanDistance/100;
 
-            std::cout << "Lidar dist = " << lidarDist << std::endl;
+            //std::cout << "Lidar dist = " << lidarDist << std::endl;
 
-            if(lidarDist > 200)
+            if(lidarDist > 200 || lidarDist < 5)
                 continue;
 
-            lidarDist = lidarDist*20/100;
-
-            double xp = (robotX+ lidarDist*sin((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
-            double yp = (robotY + lidarDist*cos((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
-
-           // std::cout << "xp = " << abs(xp-robotX) << ", yp = " << abs(yp-robotY) << std::endl;
-
-            if(abs(xp-robotX) < 3 && abs(yp-robotY) < 3)
-                continue;
+            double xp = (robotX2*10 + lidarDist*cos((-(copyOfLaserData.Data[k].scanAngle))*TO_RADIANS+robotAngle));
+            double yp = (robotY2*10 + lidarDist*sin((-(copyOfLaserData.Data[k].scanAngle))*TO_RADIANS+robotAngle));
 
             int bl = mapDialog.getBaseLength();
 
@@ -48,11 +37,10 @@ void MainWindow::get_laserdata_and_write_to_map()
             if(xp < 0 || xp >= l || yp < 0 || yp >= l)
                 mapDialog.resizeMapGrid(l+bl);
             else
-                mapDialog.writeToGrid(xp,yp);
+                mapDialog.writeToGrid(std::round(xp),std::round(yp));
         }
+        //mux2.unlock();
 
-        this_thread::sleep_for(500ms);
-    }
 }
 
 
@@ -80,6 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     datacounter=0;
     canStart = false;
+    isRotating = false;
 }
 
 MainWindow::~MainWindow()
@@ -176,6 +165,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
         forwardspeed = robot_motion_param.trans_speed;
         rotationspeed = robot_motion_param.rot_speed;
 
+        mutex mux;
         if(set_point.xn.empty()){
             mission_started = false;
             ui->startMissionButton->setText("Start mission");
@@ -188,9 +178,16 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
         }
 
         if(forwardspeed == 0.0 && rotationspeed != 0.0){
+
+            mux.lock();
+            isRotating = true;
+            mux.unlock();
             robot.setRotationSpeed(rotationspeed);
         }
         else if(forwardspeed != 0.0 && rotationspeed != 0.0){
+            mux.lock();
+            isRotating = false;
+            mux.unlock();
             robot.setArcSpeed(forwardspeed, forwardspeed/rotationspeed);
         }
         else if(forwardspeed != 0.0 && rotationspeed == 0.0)
@@ -225,10 +222,21 @@ void MainWindow::set_robot_connect_data()
 int MainWindow::processThisLidar(LaserMeasurement laserData)
 {
     memcpy( &copyOfLaserData,&laserData,sizeof(LaserMeasurement));
+    mutex mux;
+    mux.lock();
+    robotX = robotCoord.x;
+    robotY = robotCoord.y;
+    robotAngle = robotCoord.a*TO_RADIANS;
+    if(!isRotating){
+        f = std::bind(&MainWindow::get_laserdata_and_write_to_map,this,robotX, robotY, robotAngle);
+        std::async(std::launch::async, f);
+    }
+    mux.unlock();
     //tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
     // ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
     updateLaserPicture=1;
     update();//tento prikaz prinuti prekreslit obrazovku.. zavola sa paintEvent funkcia
+
 
     return 0;
 }
@@ -280,13 +288,14 @@ void MainWindow::on_startButton_clicked() //start button
 //            if(/*js==0 &&*/ axis==0){rotationspeed=-value*(3.14159/2.0);}}
 //    );
 
-    mutex mux;
-    mux.lock();
-    isStoped = false;
-    std::function<void(void)> f =std::bind(&MainWindow::get_laserdata_and_write_to_map,this);
-    mappingThread=std::move(std::thread(f));
-    canStart = true;
-    mux.unlock();
+//    mutex mux;
+//    mux.lock();
+//    isStoped = false;
+
+//    mappingThread=std::move(std::thread(f));
+//    canStart = true;
+//    mux.unlock();
+
 }
 
 void MainWindow::on_pushButton_2_clicked() //forward
