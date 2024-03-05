@@ -7,8 +7,8 @@ mapping::mapping(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::mapping)
 {
-    length = 140;
-    scale = 4;
+    length = 200;
+    scale = 2;
     baseLength = length/2;
     map.resize(length);
 
@@ -62,9 +62,6 @@ int &mapping::getBaseLength()
 
 void mapping::writeToGrid(int xgi, int ygi)
 {
-    if(map.empty())
-        return;
-
     map[xgi][ygi] = true;
 }
 
@@ -109,11 +106,10 @@ void mapping::paintEvent(QPaintEvent *event)
             if(map[i][j]==1){
                 x = i*scale;
                 y = j*scale+100;
-                paint.drawEllipse(QPoint(x,y),2,2);
+                paint.drawEllipse(QPoint(x,y),1,1);
             }
         }
     }
-
 
     paint.end();
     ui->label->setPixmap(*pix);

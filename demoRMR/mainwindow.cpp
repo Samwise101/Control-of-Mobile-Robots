@@ -24,13 +24,16 @@ void MainWindow::get_laserdata_and_write_to_map()
         {
             int lidarDist=copyOfLaserData.Data[k].scanDistance/20;
 
+            if(lidarDist > 300)
+                continue;
+
             lidarDist = lidarDist*20/100;
 
             int xp = (robotX+ lidarDist*sin((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
             int yp = (robotY + lidarDist*cos((360-(copyOfLaserData.Data[k].scanAngle)+90)*TO_RADIANS+robotCoord.a*TO_RADIANS));
 
-//            if(abs(xp-robotX/100) < 6 && abs(yp-robotY/100) < 6)
-//                continue;
+            if(abs(xp-robotX) < 3 && abs(yp-robotY) < 3)
+                continue;
 
             int bl = mapDialog.getBaseLength();
 
@@ -46,7 +49,7 @@ void MainWindow::get_laserdata_and_write_to_map()
                 mapDialog.writeToGrid(xp,yp);
         }
 
-        this_thread::sleep_for(2000ms);
+        this_thread::sleep_for(500ms);
     }
 }
 
