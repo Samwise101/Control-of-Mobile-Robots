@@ -9,38 +9,36 @@
 
 void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, double robotA)
 {
-
-    std::cout << "X=" << robotX << ", Y=" << robotY << ", A=" << robotA << std::endl;
+    //std::cout << "X=" << robotX << ", Y=" << robotY << ", A=" << robotA << std::endl;
     double robotX2 = robotX;
-    double robotY2 = robotY;
+    double robotY2 = -robotY;
     double robotAngle = robotA;
 
-    //mux2.lock();
-        for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k+=2)
-        {
-            double lidarDist=copyOfLaserData.Data[k].scanDistance/100;
+    mux2.lock();
+    for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k+=2)
+    {
+        double lidarDist=copyOfLaserData.Data[k].scanDistance/100;
 
-            //std::cout << "Lidar dist = " << lidarDist << std::endl;
+        //std::cout << "Lidar dist = " << lidarDist << std::endl;
 
-            if(lidarDist > 200 || lidarDist < 5)
-                continue;
+        if(lidarDist > 200 || lidarDist < 5)
+            continue;
 
-            double xp = (robotX2*10 + lidarDist*cos((-(copyOfLaserData.Data[k].scanAngle))*TO_RADIANS+robotAngle));
-            double yp = (robotY2*10 + lidarDist*sin((-(copyOfLaserData.Data[k].scanAngle))*TO_RADIANS+robotAngle));
+        double xp = (robotX2*10 + lidarDist*cos((-(copyOfLaserData.Data[k].scanAngle))*TO_RADIANS+robotAngle));
+        double yp = (robotY2*10 - lidarDist*sin((-(copyOfLaserData.Data[k].scanAngle))*TO_RADIANS+robotAngle));
 
-            int bl = mapDialog.getBaseLength();
+        int bl = mapDialog.getBaseLength();
 
-            xp += bl;
-            yp += bl;
-            int l = mapDialog.getLength();
+        xp += bl;
+        yp += bl;
+        int l = mapDialog.getLength();
 
-            if(xp < 0 || xp >= l || yp < 0 || yp >= l)
-                mapDialog.resizeMapGrid(l+bl);
-            else
-                mapDialog.writeToGrid(std::round(xp),std::round(yp));
-        }
-        //mux2.unlock();
-
+        if(xp < 0 || xp >= l || yp < 0 || yp >= l)
+            mapDialog.resizeMapGrid(l+bl);
+        else
+            mapDialog.writeToGrid(std::round(xp),std::round(yp));
+    }
+    mux2.unlock();
 }
 
 
@@ -94,7 +92,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
     rect= ui->frame->geometry();
     rect.translate(0,15);
     painter.drawRect(rect);
-
 
     if(useCamera1==true && actIndex>-1)
     {
@@ -205,7 +202,6 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
     datacounter++;
 
     return 0;
-
 }
 
 void MainWindow::set_robot_connect_data()
@@ -279,23 +275,6 @@ void MainWindow::on_startButton_clicked() //start button
 
     robot.robotStart();
     emit uiValuesChanged(robotCoord.x, robotCoord.y, robotCoord.a);
-
-//    instance = QJoysticks::getInstance();
-
-//    connect(
-//        instance, &QJoysticks::axisChanged,
-//        [this]( const int js, const int axis, const qreal value) { if(/*js==0 &&*/ axis==1){forwardspeed=-value*300;}
-//            if(/*js==0 &&*/ axis==0){rotationspeed=-value*(3.14159/2.0);}}
-//    );
-
-//    mutex mux;
-//    mux.lock();
-//    isStoped = false;
-
-//    mappingThread=std::move(std::thread(f));
-//    canStart = true;
-//    mux.unlock();
-
 }
 
 void MainWindow::on_pushButton_2_clicked() //forward
@@ -357,13 +336,11 @@ void MainWindow::on_pushButton_clicked()
     if(useCamera1==true)
     {
         useCamera1=false;
-
         ui->pushButton->setText("use camera");
     }
     else
     {
         useCamera1=true;
-
         ui->pushButton->setText("use laser");
     }
 }
