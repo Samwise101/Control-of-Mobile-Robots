@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QTimer>
+#include <QPixmap>
 #include<windows.h>
 #include<iostream>
 //#include<arpa/inet.h>

@@ -381,6 +381,8 @@ void MainWindow::on_pushButton_9_clicked()
 void MainWindow::on_pushButton_10_clicked()
 {
     pathFindDialog.exec();
+    QFile file("map2.bmp");
+    pathFindDialog.getPixmap().save(&file, "BMP");
 }
 
 

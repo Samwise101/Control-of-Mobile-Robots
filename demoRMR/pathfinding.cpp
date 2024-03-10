@@ -1,20 +1,32 @@
 #include "pathfinding.h"
 #include "ui_pathfinding.h"
 #include <QRect>
+#include <iostream>
 
 PathFinding::PathFinding(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::PathFinding)
 {
     canDraw = false;
-    image = QImage(":/images/map.png");
-    loadMap(image);
+    image = QImage(":/images/map.bmp");
+    loadMapImage(image);
+
+    QFile file("map3.bmp");
+    QPixmap pix = QPixmap::fromImage(image);
+    pix.save(&file, "BMP");
+
+    loadMapToVector(image);
     ui->setupUi(this);
 }
 
 PathFinding::~PathFinding()
 {
     delete ui;
+}
+
+QPixmap PathFinding::getPixmap() const
+{
+    return pixmap;
 }
 
 void PathFinding::paintEvent(QPaintEvent *event)
@@ -26,64 +38,94 @@ void PathFinding::paintEvent(QPaintEvent *event)
     int w = pixmap.width();
     int h = pixmap.height();
 
-    if(canDraw){
-        painter.setPen(Qt::blue);
-        painter.setBrush(Qt::blue);
-        painter.drawEllipse(indexW-1, indexH-1, 4,4);
-    }
-
     QRect rect(0, 0, w, h);
     painter.end();
     ui->label->setPixmap(pixmap);
 }
 
-void PathFinding::loadMap(QImage& image)
+void PathFinding::loadMapToVector(QImage& image)
+{
+    map.resize(diffW);
+    for(int i = 0; i < diffW; i++){
+        map[i].resize(diffH,0);
+    }
+
+    QColor color;
+
+    for(int i = startW; i < indexW; i++){
+        for(int j = startH; j < indexH; j++){
+            color = image.pixelColor(i,j);
+            if(color != Qt::white){
+                map[i-startW][j-startH] = 1;
+            }
+            else{
+                map[i-startW][j-startH] = 0;
+            }
+        }
+    }
+}
+
+void PathFinding::loadMapImage(QImage& image)
 {
     QColor color;
 
     int height = image.height();
     int width = image.width();
 
-    bool test= false;
-    int k = 0;
+    indexH = 0;
+    indexW = 0;
+    startW = 1000;
+    startH = 1000;
 
     for(int i = 0; i < width; i++){
         for(int j = 0; j < height; j++){
             color = image.pixelColor(i,j);
             if(color == Qt::black){
-                if(k <= 16){
-                    image.setPixel(i, j, qRgb(0, 0, 255));
-                    k++;
+                if(j > indexH){
+                    indexH = j;
                 }
-                if((i-4) > 0){
-                    color = image.pixelColor(i-4,j);
+                if(i > indexW){
+                    indexW = i;
+                }
+                if(j < startH){
+                    startH = j;
+                }
+                if(i < startW){
+                    startW = i;
+                }
+                if((i-2) > 0){
+                    color = image.pixelColor(i-2,j);
                     if(color == Qt::white){
-                        image.setPixel(i-4, j, qRgb(128, 128, 128));
+                        image.setPixel(i-2, j, qRgb(128, 128, 128));
                     }
                 }
 
-                if((j-4) > 0){
-                    color = image.pixelColor(i,j-4);
+                if((j-2) > 0){
+                    color = image.pixelColor(i,j-2);
                     if(color == Qt::white){
-                        image.setPixel(i, j-4, qRgb(128, 128, 128));
+                        image.setPixel(i, j-2, qRgb(128, 128, 128));
                     }
                 }
 
-                if((i+4) < width){
-                    color = image.pixelColor(i+4,j);
+                if((i+2) < width){
+                    color = image.pixelColor(i+2,j);
                     if(color == Qt::white){
-                        image.setPixel(i+4, j, qRgb(128, 128, 128));
+                        image.setPixel(i+2, j, qRgb(128, 128, 128));
                     }
                 }
 
-                if((j+4) < height){
-                    color = image.pixelColor(i,j+4);
+                if((j+2) < height){
+                    color = image.pixelColor(i,j+2);
                     if(color == Qt::white){
-                        image.setPixel(i, j+4, qRgb(128, 128, 128));
+                        image.setPixel(i, j+2, qRgb(128, 128, 128));
                     }
                 }
             }
         }
     }
     canDraw = true;
+
+    diffH = indexH - startH;
+    diffW = indexW - startW;
+    std::cout << "Height:" << diffH << ", Width:" << diffW << std::endl;
 }

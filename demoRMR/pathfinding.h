@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QFile>
 #include <QImage>
+#include <vector>
 
 namespace Ui {
 class PathFinding;
@@ -19,6 +20,8 @@ public:
     explicit PathFinding(QWidget *parent = nullptr);
     ~PathFinding();
 
+    QPixmap getPixmap() const;
+
 private:
     Ui::PathFinding *ui;
 
@@ -27,12 +30,20 @@ private:
 
     int indexH;
     int indexW;
+    int startH;
+    int startW;
+    int diffH;
+    int diffW;
+
+    std::vector<std::vector<int>> map;
 
     bool canDraw;
 
     void paintEvent(QPaintEvent *event);
 
-    void loadMap(QImage& image);
+    void loadMapImage(QImage& image);
+
+    void loadMapToVector(QImage& image);
 };
 
 #endif // PATHFINDING_H
