@@ -8,7 +8,7 @@ mapping::mapping(QWidget *parent) :
     ui(new Ui::mapping)
 {
     length = 140;
-    scale = 2;
+    scale = 3;
     baseLength = length/2;
     map.resize(length);
 
