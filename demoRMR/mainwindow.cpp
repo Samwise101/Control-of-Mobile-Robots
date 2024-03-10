@@ -41,8 +41,6 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
     mux2.unlock();
 }
 
-
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)

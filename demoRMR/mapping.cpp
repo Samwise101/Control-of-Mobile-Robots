@@ -111,6 +111,9 @@ void mapping::paintEvent(QPaintEvent *event)
         }
     }
 
+    paint.setPen(Qt::red);
+    paint.setBrush(Qt::red);
+
     paint.end();
     ui->label->setPixmap(*pix);
 }
