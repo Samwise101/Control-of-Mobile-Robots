@@ -8,10 +8,16 @@ PathFinding::PathFinding(QWidget *parent) :
     ui(new Ui::PathFinding)
 {
     canDraw = false;
+    scale = 3;
+
+    goal.setX(-1);
+    goal.setY(-1);
+
+    robotStart.setX(20);
+    robotStart.setY(141);
+
     image = QImage(":/images/map.bmp");
     loadMapImage(image);
-
-    scale = 3;
 
     QFile file("map3.bmp");
     QPixmap pixmap = QPixmap::fromImage(image);
@@ -85,9 +91,6 @@ void PathFinding::paintEvent(QPaintEvent *event)
                 }
             }
         }
-//        paint.setPen(Qt::red);
-//        paint.setBrush(Qt::red);
-//        paint.drawEllipse(QPoint(60,425),4,4);
 
         paint.end();
         ui->label->setPixmap(*pix);
@@ -107,6 +110,11 @@ void PathFinding::mousePressEvent(QMouseEvent *event)
 
         QImage imageTemp = pix->toImage();
         if(imageTemp.pixelColor(event->x(), event->y()) == Qt::white){
+            if(goal.x() != -1 && goal.y() != -1){
+                map[goal.x()][goal.y()] = 0;
+            }
+            goal.setX(event->x()/scale);
+            goal.setY(event->y()/scale);
             map[event->x()/scale][event->y()/scale]=-2;
         }
     }
@@ -131,11 +139,16 @@ void PathFinding::loadMapToVector(QImage& image)
             else{
                 map[i-startW][j-startH] = 0;
             }
-            if(i == (startW + 20) && j == (startH + 141)){
+            if(i == (startW + robotStart.x()) && j == (startH + robotStart.y())){
                 map[i-startW][j-startH] = -1;
             }
         }
     }
+}
+
+void PathFinding::floodMap()
+{
+
 }
 
 void PathFinding::loadMapImage(QImage& image)

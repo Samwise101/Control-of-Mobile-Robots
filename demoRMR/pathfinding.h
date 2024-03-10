@@ -9,6 +9,7 @@
 #include <vector>
 #include <QMouseEvent>
 #include <QEvent>
+#include <QPoint>
 
 namespace Ui {
 class PathFinding;
@@ -30,6 +31,8 @@ private:
     QImage image;
     QPixmap pixmap;
 
+    QPoint robotStart;
+    QPoint goal;
     int indexH;
     int indexW;
     int startH;
@@ -54,6 +57,8 @@ private:
     void loadMapImage(QImage& image);
 
     void loadMapToVector(QImage& image);
+
+    void floodMap();
 };
 
 #endif // PATHFINDING_H
