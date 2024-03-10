@@ -5,6 +5,7 @@
 #include <QPixmap>
 #include <QPainter>
 #include <QFile>
+#include <QImage>
 
 namespace Ui {
 class PathFinding;
@@ -21,7 +22,12 @@ public:
 private:
     Ui::PathFinding *ui;
 
+    QImage image;
+    QPixmap pixmap;
+
     void paintEvent(QPaintEvent *event);
+
+    void loadMap(QImage& image);
 };
 
 #endif // PATHFINDING_H
