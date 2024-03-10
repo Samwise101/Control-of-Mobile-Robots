@@ -6,8 +6,8 @@ PathFinding::PathFinding(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::PathFinding)
 {
-    image = QImage(":/images/map.png");
     canDraw = false;
+    image = QImage(":/images/map.png");
     loadMap(image);
     ui->setupUi(this);
 }
@@ -19,19 +19,22 @@ PathFinding::~PathFinding()
 
 void PathFinding::paintEvent(QPaintEvent *event)
 {
-    QPainter painter(this);
+    pixmap = QPixmap::fromImage(image);
+    QPainter painter(&pixmap);
+    painter.setPen(Qt::black);
     painter.setBrush(Qt::black);
-    painter.setPen(QPen(Qt::white));
+    int w = pixmap.width();
+    int h = pixmap.height();
 
-        pixmap = QPixmap::fromImage(image);
-        int w = pixmap.width();
-        int h = pixmap.height();
+    if(canDraw){
+        painter.setPen(Qt::blue);
+        painter.setBrush(Qt::blue);
+        painter.drawEllipse(indexW-1, indexH-1, 4,4);
+    }
 
-        QRect rect(0, 0, w, h);
-
-        painter.drawRect(rect);
-        painter.drawPixmap(rect, pixmap);
-
+    QRect rect(0, 0, w, h);
+    painter.end();
+    ui->label->setPixmap(pixmap);
 }
 
 void PathFinding::loadMap(QImage& image)
@@ -41,10 +44,17 @@ void PathFinding::loadMap(QImage& image)
     int height = image.height();
     int width = image.width();
 
+    bool test= false;
+    int k = 0;
+
     for(int i = 0; i < width; i++){
         for(int j = 0; j < height; j++){
             color = image.pixelColor(i,j);
             if(color == Qt::black){
+                if(k <= 16){
+                    image.setPixel(i, j, qRgb(0, 0, 255));
+                    k++;
+                }
                 if((i-4) > 0){
                     color = image.pixelColor(i-4,j);
                     if(color == Qt::white){

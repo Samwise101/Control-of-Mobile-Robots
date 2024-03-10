@@ -25,6 +25,11 @@ private:
     QImage image;
     QPixmap pixmap;
 
+    int indexH;
+    int indexW;
+
+    bool canDraw;
+
     void paintEvent(QPaintEvent *event);
 
     void loadMap(QImage& image);
