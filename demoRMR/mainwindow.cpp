@@ -380,9 +380,9 @@ void MainWindow::on_pushButton_9_clicked()
 
 void MainWindow::on_pushButton_10_clicked()
 {
-    QFile file("map.png");
+    QFile file("map.bmp");
     mapDialog.exec();
-    mapDialog.getPix()->save(&file, "PNG");
+    mapDialog.getPix()->save(&file, "BMP");
 }
 
 

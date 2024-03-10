@@ -7,8 +7,8 @@ mapping::mapping(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::mapping)
 {
-    length = 200;
-    scale = 4;
+    length = 140;
+    scale = 2;
     baseLength = length/2;
     map.resize(length);
 
@@ -94,7 +94,7 @@ QPixmap *mapping::getPix() const
 void mapping::paintEvent(QPaintEvent *event)
 {
     QPainter paint(pix);
-    pix->fill( Qt::white);
+    pix->fill(Qt::white);
     paint.setPen(Qt::black);
     paint.setBrush(Qt::black);
 
@@ -104,8 +104,8 @@ void mapping::paintEvent(QPaintEvent *event)
     for(int i = 0; i < map.size(); i++){
         for(int j = 0; j < map[i].size();j++){
             if(map[i][j]==1){
-                x = i*scale-350;
-                y = j*scale-150;
+                x = i*scale-120;
+                y = j*scale-40;
                 paint.drawEllipse(QPoint(x,y),2,2);
             }
         }
