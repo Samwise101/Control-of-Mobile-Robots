@@ -12,15 +12,22 @@ PathFinding::PathFinding(QWidget *parent) :
     loadMapImage(image);
 
     QFile file("map3.bmp");
-    QPixmap pix = QPixmap::fromImage(image);
-    pix.save(&file, "BMP");
+    QPixmap pixmap = QPixmap::fromImage(image);
+    pixmap.save(&file, "BMP");
 
     loadMapToVector(image);
     ui->setupUi(this);
+
+    h = ui->label->height();
+    w = ui->label->width();
+    std::cout << "height=" << h << ", width=" << w << std::endl;
+    pix = new QPixmap(w,h);
+    canDraw = true;
 }
 
 PathFinding::~PathFinding()
 {
+    delete pix;
     delete ui;
 }
 
@@ -35,12 +42,34 @@ void PathFinding::paintEvent(QPaintEvent *event)
     QPainter painter(&pixmap);
     painter.setPen(Qt::black);
     painter.setBrush(Qt::black);
-    int w = pixmap.width();
-    int h = pixmap.height();
+    int wi = pixmap.width();
+    int hi = pixmap.height();
 
-    QRect rect(0, 0, w, h);
+    QRect rect(0, 0, wi, hi);
     painter.end();
     ui->label->setPixmap(pixmap);
+
+//    if(canDraw){
+//    QPainter paint(pix);
+//    pix->fill( Qt::white);
+//    paint.setPen(Qt::black);
+//    paint.setBrush(Qt::black);
+
+//    int x{};
+//    int y{};
+
+//    for(int i = 0; i < map.size(); i++){
+//        for(int j = 0; j < map[i].size();j++){
+//            if(map[i][j]==1){
+//                x = i*3;
+//                y = j*3;
+//                paint.drawEllipse(QPoint(x,y),2,2);
+//            }
+//        }
+//    }
+//    paint.end();
+//    ui->label->setPixmap(*pix);
+//    }
 }
 
 void PathFinding::loadMapToVector(QImage& image)
@@ -123,7 +152,6 @@ void PathFinding::loadMapImage(QImage& image)
             }
         }
     }
-    canDraw = true;
 
     diffH = indexH - startH;
     diffW = indexW - startW;

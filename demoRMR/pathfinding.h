@@ -39,6 +39,11 @@ private:
 
     bool canDraw;
 
+    QPixmap* pix;
+
+    int h;
+    int w;
+
     void paintEvent(QPaintEvent *event);
 
     void loadMapImage(QImage& image);
