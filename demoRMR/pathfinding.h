@@ -7,6 +7,8 @@
 #include <QFile>
 #include <QImage>
 #include <vector>
+#include <QMouseEvent>
+#include <QEvent>
 
 namespace Ui {
 class PathFinding;
@@ -34,6 +36,7 @@ private:
     int startW;
     int diffH;
     int diffW;
+    int scale;
 
     std::vector<std::vector<int>> map;
 
@@ -45,6 +48,8 @@ private:
     int w;
 
     void paintEvent(QPaintEvent *event);
+
+    void mousePressEvent(QMouseEvent *event);
 
     void loadMapImage(QImage& image);
 
