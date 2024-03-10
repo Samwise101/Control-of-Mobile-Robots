@@ -218,7 +218,7 @@ void MainWindow::set_robot_connect_data()
 int MainWindow::processThisLidar(LaserMeasurement laserData)
 {
     memcpy( &copyOfLaserData,&laserData,sizeof(LaserMeasurement));
-    mutex mux;
+/*    mutex mux;
     mux.lock();
     robotX = robotCoord.x;
     robotY = robotCoord.y;
@@ -227,7 +227,7 @@ int MainWindow::processThisLidar(LaserMeasurement laserData)
         f = std::bind(&MainWindow::get_laserdata_and_write_to_map,this,robotX, robotY, robotAngle);
         std::async(std::launch::async, f);
     }
-    mux.unlock();
+    mux.unlock()*/;
     //tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
     // ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
     updateLaserPicture=1;
@@ -380,9 +380,7 @@ void MainWindow::on_pushButton_9_clicked()
 
 void MainWindow::on_pushButton_10_clicked()
 {
-    QFile file("map.png");
-    mapDialog.exec();
-    mapDialog.getPix()->save(&file, "PNG");
+    pathFindDialog.exec();
 }
 
 

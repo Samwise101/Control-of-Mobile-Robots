@@ -238,7 +238,7 @@
       <item>
        <widget class="QPushButton" name="pushButton_10">
         <property name="text">
-         <string>Open Map Window</string>
+         <string>Show Path Map</string>
         </property>
        </widget>
       </item>

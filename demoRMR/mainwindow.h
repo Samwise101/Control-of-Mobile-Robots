@@ -26,6 +26,8 @@
 #include "odometry.h"
 #include "regulator.h"
 #include "mapping.h"
+#include "pathfinding.h"
+
 #include <memory.h>
 #include <QMessageBox>
 #include <QJoysticks.h>
@@ -146,6 +148,8 @@ private:
      odometry robot_odometry;
      Regulator robot_motion_reg;
      mapping mapDialog;
+
+     PathFinding pathFindDialog;
 
      std::thread mappingThread;
 

@@ -61,12 +61,18 @@ SOURCES += main.cpp\
         mainwindow.cpp \
         mapping.cpp \
         odometry.cpp \
+        pathfinding.cpp \
         regulator.cpp
 
 HEADERS  += mainwindow.h \
     mapping.h \
     odometry.h \
+    pathfinding.h \
     regulator.h
 
 FORMS    += mainwindow.ui \
-    mapping.ui
+    mapping.ui \
+    pathfinding.ui
+
+RESOURCES += \
+    resources.qrc
