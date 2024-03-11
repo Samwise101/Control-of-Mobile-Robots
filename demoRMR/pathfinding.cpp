@@ -2,6 +2,9 @@
 #include "ui_pathfinding.h"
 #include <QRect>
 #include <iostream>
+#include <queue>
+#include <stack>
+#include <utility>
 
 PathFinding::PathFinding(QWidget *parent) :
     QDialog(parent),
@@ -14,7 +17,7 @@ PathFinding::PathFinding(QWidget *parent) :
     goal.setY(-1);
 
     robotStart.setX(20);
-    robotStart.setY(141);
+    robotStart.setY(140);
 
     image = QImage(":/images/map.bmp");
     loadMapImage(image);
@@ -24,6 +27,7 @@ PathFinding::PathFinding(QWidget *parent) :
     pixmap.save(&file, "BMP");
 
     loadMapToVector(image);
+
     ui->setupUi(this);
 
     h = ui->label->height();
@@ -89,6 +93,13 @@ void PathFinding::paintEvent(QPaintEvent *event)
                     y = j*scale;
                     paint.drawEllipse(QPoint(x,y),4,4);
                 }
+                else if(map[i][j] != 0){
+                    paint.setPen(Qt::magenta);
+                    paint.setBrush(Qt::magenta);
+                    x = i*scale;
+                    y = j*scale;
+                    paint.drawEllipse(QPoint(x,y),1,1);
+                }
             }
         }
 
@@ -116,9 +127,11 @@ void PathFinding::mousePressEvent(QMouseEvent *event)
             goal.setX(event->x()/scale);
             goal.setY(event->y()/scale);
             map[event->x()/scale][event->y()/scale]=-2;
+            update();
+
+            floodFill(goal.x(), goal.y(), robotStart.x(), robotStart.y(),2);
         }
     }
-    update();
 }
 
 void PathFinding::loadMapToVector(QImage& image)
@@ -146,9 +159,44 @@ void PathFinding::loadMapToVector(QImage& image)
     }
 }
 
-void PathFinding::floodMap()
-{
 
+
+void PathFinding::floodFill(int x, int y, int targetX, int targetY, int currValue) {
+    int rows = map.size();
+    int cols = map[0].size();
+    const int dr[] = {-1, 0, 1, 0};
+    const int dc[] = {0, 1, 0, -1};
+
+    if (x < 0 || x >= rows || y < 0 || y >= cols || map[x][y] == map[targetX][targetY])
+        return;
+
+    std::queue<std::pair<int, int>> cells;
+    cells.push({x,y});
+    int k = 0;
+
+    while (!cells.empty()) {
+        int r = cells.front().first;
+        int c = cells.front().second;
+        cells.pop();
+
+        if(r == 20 && c == 140){
+            std::cout << "Iam here" << std::endl;
+            return;
+        }
+
+        for (int d = 0; d < 4; ++d) {
+            int nx = r + dr[d];
+            int ny = c + dc[d];
+            if (nx >= 0 && nx < rows && ny >= 0 && ny < cols && map[nx][ny] == 0) {
+                cells.push({nx, ny});
+                k++;
+                if(map[nx][ny]!=-2 && map[nx][ny]!=-1){
+                    map[nx][ny] = currValue;
+                }
+            }
+        }
+    }
+    std::cout << "k=" << k << std::endl;
 }
 
 void PathFinding::loadMapImage(QImage& image)

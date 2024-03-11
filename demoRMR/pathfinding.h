@@ -50,6 +50,8 @@ private:
     int h;
     int w;
 
+    void floodFill(int startRow, int startCol, int targetRow, int targetCol, int currValue);
+
     void paintEvent(QPaintEvent *event);
 
     void mousePressEvent(QMouseEvent *event);
@@ -57,8 +59,6 @@ private:
     void loadMapImage(QImage& image);
 
     void loadMapToVector(QImage& image);
-
-    void floodMap();
 };
 
 #endif // PATHFINDING_H
