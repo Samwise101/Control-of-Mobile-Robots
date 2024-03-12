@@ -106,7 +106,7 @@ void mapping::paintEvent(QPaintEvent *event)
             if(map[i][j]==1){
                 x = i*scale-150;
                 y = j*scale-40;
-                paint.drawRect(x,y,4,4);
+                paint.drawRect(x,y,3,3);
             }
         }
     }
