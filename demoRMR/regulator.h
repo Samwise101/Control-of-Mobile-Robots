@@ -12,6 +12,11 @@ typedef struct robot_motion{
     double u_integral;
 }robot_motion;
 
+typedef struct SetPoint{
+    std::vector<double> xn;
+    std::vector<double> yn;
+}SetPoint;
+
 
 class Regulator
 {

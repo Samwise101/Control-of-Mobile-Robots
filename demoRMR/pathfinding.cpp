@@ -50,6 +50,11 @@ QPixmap PathFinding::getPixmap() const
     return pixmap;
 }
 
+const std::vector<QPoint>& PathFinding::getCorner_points() const
+{
+    return corner_points;
+}
+
 void PathFinding::paintEvent(QPaintEvent *event)
 {
 
@@ -71,13 +76,6 @@ void PathFinding::paintEvent(QPaintEvent *event)
                     y = j*scale;
                     paint.drawRect(x,y,3,3);
                 }
-//                else if(map[i][j]==-2){
-//                    paint.setPen(Qt::blue);
-//                    paint.setBrush(Qt::blue);
-//                    x = i*scale;
-//                    y = j*scale;
-//                    paint.drawEllipse(QPoint(x,y),2,2);
-//                }
                 else if(map[i][j]==-1){
                     paint.setPen(Qt::red);
                     paint.setBrush(Qt::red);

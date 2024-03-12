@@ -64,9 +64,11 @@ MainWindow::MainWindow(QWidget *parent) :
     robotCoord.x = 0.0;
     robotCoord.y = 0.0;
 
-    datacounter=0;
+    datacounter = 0;
     canStart = false;
     isRotating = false;
+
+    controlType = 0;
 }
 
 MainWindow::~MainWindow()
@@ -155,27 +157,40 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 {
     robot_odometry.robot_odometry(robotdata, true, robotCoord);
 
-    if(mission_started && !set_point.xn.empty()){
+    if(mission_started){
 
-        robot_motion_reg.robot_movement_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1], robotCoord, robot_motion_param);
+        if(controlType == 0 && !set_point.xn.empty()){
+            robot_motion_reg.robot_movement_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1], robotCoord, robot_motion_param);
+        }
+        else if(controlType == 1 && !set_point_map.xn.empty()){
+            robot_motion_reg.robot_movement_reg(set_point_map.xn[set_point_map.xn.size() - 1], set_point_map.yn[set_point_map.yn.size() - 1], robotCoord, robot_motion_param);
+        }
 
         forwardspeed = robot_motion_param.trans_speed;
         rotationspeed = robot_motion_param.rot_speed;
 
         mutex mux;
-        if(set_point.xn.empty()){
-            mission_started = false;
-            ui->startMissionButton->setText("Start mission");
-        }
-
         if(forwardspeed == 0.0 && rotationspeed == 0.0)
         {
-            set_point.xn.pop_back();
-            set_point.yn.pop_back();
+            if(controlType == 0){
+                set_point.xn.pop_back();
+                set_point.yn.pop_back();
+                if(set_point.xn.empty()){
+                    mission_started = false;
+                    ui->startMissionButton->setText("Start mission");
+                }
+            }
+            else{
+                set_point_map.xn.pop_back();
+                set_point_map.yn.pop_back();
+                if(set_point_map.xn.empty()){
+                    mission_started = false;
+                    ui->startMissionButton->setText("Start mission");
+                }
+            }
         }
 
         if(forwardspeed == 0.0 && rotationspeed != 0.0){
-
             mux.lock();
             isRotating = true;
             mux.unlock();
@@ -330,7 +345,6 @@ void MainWindow::on_pushButton_4_clicked() //stop
     }*/
 }
 
-
 void MainWindow::on_pushButton_clicked()
 {
     if(useCamera1==true)
@@ -352,29 +366,43 @@ void MainWindow::getNewFrame()
 
 void MainWindow::on_startMissionButton_clicked()
 {
-    if(!mission_started && !set_point.xn.empty()){
-        mission_started = true;
-        ui->startMissionButton->setText("Stop mission");
+    if(controlType == 0){
+        if(!mission_started && !set_point.xn.empty()){
+            mission_started = true;
+            ui->startMissionButton->setText("Stop mission");
+        }
+        else if(mission_started){
+            mission_started = false;
+            ui->startMissionButton->setText("Start mission");
+        }
     }
-    else if(mission_started){
-        mission_started = false;
-        ui->startMissionButton->setText("Start mission");
+    else{
+        if(!mission_started && !set_point_map.xn.empty()){
+            mission_started = true;
+            ui->startMissionButton->setText("Stop mission");
+        }
+        else if(mission_started){
+            mission_started = false;
+            ui->startMissionButton->setText("Start mission");
+        }
     }
 }
 
 
 void MainWindow::on_pushButton_9_clicked()
 {
-    if(set_point.xn.empty() && set_point.yn.empty()){
+    if(controlType == 0){
+        if(set_point.xn.empty() && set_point.yn.empty()){
+            set_point.xn.insert(set_point.xn.begin(),ui->xn->text().toDouble());
+            set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
+            return;
+        }
+        else if(set_point.xn[0] == ui->xn->text().toDouble() && set_point.yn[0] == ui->yn->text().toDouble())
+            return;
+
         set_point.xn.insert(set_point.xn.begin(),ui->xn->text().toDouble());
         set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
-        return;
     }
-    else if(set_point.xn[0] == ui->xn->text().toDouble() && set_point.yn[0] == ui->yn->text().toDouble())
-        return;
-
-    set_point.xn.insert(set_point.xn.begin(),ui->xn->text().toDouble());
-    set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
 }
 
 
@@ -383,18 +411,60 @@ void MainWindow::on_pushButton_10_clicked()
     pathFindDialog.exec();
     QFile file("map2.bmp");
     pathFindDialog.getPixmap().save(&file, "BMP");
+    std::vector<QPoint> points = pathFindDialog.getCorner_points();
+    if(points.empty())
+        return;
+
+    for(int i = 0; i < points.size(); i++){
+
+    }
 }
 
 
 void MainWindow::on_pushButton_11_clicked()
 {
-    if(set_point.xn.empty())
-        return;
+    if(controlType == 0){
+        if(set_point.xn.empty())
+            return;
 
-    set_point.xn.clear();
-    set_point.yn.clear();
+        set_point.xn.clear();
+        set_point.yn.clear();
+    }
+    else{
+        if(set_point_map.xn.empty())
+            return;
+
+        set_point_map.xn.clear();
+        set_point_map.yn.clear();
+    }
 
     mission_started = false;
     ui->startMissionButton->setText("Start mission");
+}
+
+
+void MainWindow::on_comboBox_2_activated(int index)
+{
+    controlType = index;
+    if(controlType == 1){
+        ui->xn->setDisabled(true);
+        ui->yn->setDisabled(true);
+
+        if(set_point_map.xn.empty())
+            return;
+
+        set_point_map.xn.clear();
+        set_point_map.yn.clear();
+    }
+    else{
+        ui->xn->setDisabled(false);
+        ui->yn->setDisabled(false);
+
+        if(set_point.xn.empty())
+            return;
+
+        set_point.xn.clear();
+        set_point.yn.clear();
+    }
 }
 

@@ -49,11 +49,6 @@ typedef struct robot_connect_data{
     std::string camera_link;
 }robot_connect_data;
 
-typedef struct SetPoint{
-    std::vector<double> xn;
-    std::vector<double> yn;
-}SetPoint;
-
 bool isValidIpAddress(const std::string &ipAddress);
 
 namespace Ui {
@@ -110,6 +105,8 @@ private slots:
 
     void on_pushButton_11_clicked();
 
+    void on_comboBox_2_activated(int index);
+
 private:
      JOYINFO joystickInfo;
      Ui::MainWindow *ui;
@@ -127,6 +124,8 @@ private:
      double robotY;
      double robotAngle;
 
+     int controlType;
+
      std::function<void()> f;
 
      bool isRotating;
@@ -137,6 +136,8 @@ private:
      bool mission_started;
 
      SetPoint set_point;
+
+     SetPoint set_point_map;
 
      std::mutex mux;
      std::mutex mux2;

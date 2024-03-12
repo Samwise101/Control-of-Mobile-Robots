@@ -236,6 +236,20 @@
        </spacer>
       </item>
       <item>
+       <widget class="QComboBox" name="comboBox_2">
+        <item>
+         <property name="text">
+          <string>Point To Point</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Map Navigation</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="pushButton_10">
         <property name="text">
          <string>Show Path Map</string>

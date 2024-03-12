@@ -11,6 +11,9 @@
 #include <QEvent>
 #include <QPoint>
 
+#include "odometry.h"
+#include "regulator.h"
+
 namespace Ui {
 class PathFinding;
 }
@@ -24,6 +27,8 @@ public:
     ~PathFinding();
 
     QPixmap getPixmap() const;
+
+    const std::vector<QPoint>& getCorner_points() const;
 
 private:
     Ui::PathFinding *ui;
