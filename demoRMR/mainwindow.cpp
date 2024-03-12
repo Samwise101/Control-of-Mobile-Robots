@@ -21,7 +21,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
 
         //std::cout << "Lidar dist = " << lidarDist << std::endl;
 
-        if(lidarDist > 200 || lidarDist < 5)
+        if(lidarDist > 200 || (lidarDist > 6.1 && lidarDist < 7.1) || lidarDist < 1.5)
             continue;
 
         double xp = (robotX2*10 + lidarDist*cos((-(copyOfLaserData.Data[k].scanAngle))*TO_RADIANS+robotAngle));
@@ -153,9 +153,13 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 {
     robot_odometry.robot_odometry(robotdata, true, robotCoord);
 
+    if(!robotReady)
+        robotReady = true;
+
     if(mission_started && !set_point.xn.empty()){
 
         robot_motion_reg.robot_movement_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1], robotCoord, robot_motion_param);
+
 
         forwardspeed = robot_motion_param.trans_speed;
         rotationspeed = robot_motion_param.rot_speed;
@@ -215,6 +219,8 @@ void MainWindow::set_robot_connect_data()
 
 int MainWindow::processThisLidar(LaserMeasurement laserData)
 {
+    if(!robotReady)
+        return 0;
     memcpy( &copyOfLaserData,&laserData,sizeof(LaserMeasurement));
     mutex mux;
     mux.lock();

@@ -127,7 +127,7 @@ private:
      std::function<void()> f;
 
      bool isRotating;
-
+     bool robotReady{false};
      std::atomic_bool isStoped;
      std::atomic_bool canStart;
 
