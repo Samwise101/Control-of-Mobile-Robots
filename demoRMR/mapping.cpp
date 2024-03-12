@@ -8,7 +8,7 @@ mapping::mapping(QWidget *parent) :
     ui(new Ui::mapping)
 {
     length = 140;
-    scale = 4;
+    scale = 2;
     baseLength = length/2;
     map.resize(length);
 
@@ -104,9 +104,9 @@ void mapping::paintEvent(QPaintEvent *event)
     for(int i = 0; i < map.size(); i++){
         for(int j = 0; j < map[i].size();j++){
             if(map[i][j]==1){
-                x = i*scale-150;
+                x = i*scale-100;
                 y = j*scale-40;
-                paint.drawRect(x,y,3,3);
+                paint.drawRect(x,y,2,2);
             }
         }
     }
