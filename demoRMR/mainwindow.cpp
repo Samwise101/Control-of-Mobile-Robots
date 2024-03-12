@@ -64,6 +64,10 @@ MainWindow::MainWindow(QWidget *parent) :
     robotCoord.x = 0.0;
     robotCoord.y = 0.0;
 
+    robotCoordMap.a = -1.0;
+    robotCoordMap.x = -1.0;
+    robotCoordMap.y = -1.0;
+
     datacounter = 0;
     canStart = false;
     isRotating = false;
@@ -155,15 +159,15 @@ void MainWindow::setUiValues(double robotX,double robotY,double robotFi)
 
 int MainWindow::processThisRobot(TKobukiData robotdata)
 {
-    robot_odometry.robot_odometry(robotdata, true, robotCoord);
-
     if(mission_started){
 
         if(controlType == 0 && !set_point.xn.empty()){
+            robot_odometry.robot_odometry(robotdata, true, robotCoord);
             robot_motion_reg.robot_movement_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1], robotCoord, robot_motion_param);
         }
-        else if(controlType == 1 && !set_point_map.xn.empty()){
-            robot_motion_reg.robot_movement_reg(set_point_map.xn[set_point_map.xn.size() - 1], set_point_map.yn[set_point_map.yn.size() - 1], robotCoord, robot_motion_param);
+        else if(controlType == 1 && !set_point_map.xn.empty() && robotCoordMap.x != -1){
+            robot_odometry.robot_odometry(robotdata, true, robotCoordMap);
+            robot_motion_reg.robot_movement_reg(set_point_map.xn[set_point_map.xn.size() - 1], set_point_map.yn[set_point_map.yn.size() - 1], robotCoordMap, robot_motion_param);
         }
 
         forwardspeed = robot_motion_param.trans_speed;
@@ -408,6 +412,7 @@ void MainWindow::on_pushButton_9_clicked()
 
 void MainWindow::on_pushButton_10_clicked()
 {
+    PathFinding pathFindDialog(robotCoordMap);
     pathFindDialog.exec();
     QFile file("map2.bmp");
     pathFindDialog.getPixmap().save(&file, "BMP");
@@ -415,9 +420,17 @@ void MainWindow::on_pushButton_10_clicked()
     if(points.empty())
         return;
 
-    for(int i = 0; i < points.size(); i++){
-
+    if(!set_point_map.xn.empty()){
+        set_point_map.xn.clear();
+        set_point_map.yn.clear();
     }
+
+    for(int i = 0; i < points.size(); i++){
+        set_point_map.xn.insert(set_point_map.xn.begin(),points[i].x()/10);
+        set_point_map.yn.insert(set_point_map.yn.begin(),points[i].y()/10);
+    }
+
+    std::cout << "set_point_map size=" << set_point_map.xn.size() << std::endl;
 }
 
 

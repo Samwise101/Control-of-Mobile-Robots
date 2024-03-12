@@ -145,13 +145,12 @@ private:
      QJoysticks *instance;
 
      RobotCoordRotation robotCoord;
+     RobotCoordRotation robotCoordMap;
      robot_motion robot_motion_param{0.0, 0.65, 0.0, 0.4, 0.1};
 
      odometry robot_odometry;
      Regulator robot_motion_reg;
      mapping mapDialog;
-
-     PathFinding pathFindDialog;
 
      std::thread mappingThread;
 
