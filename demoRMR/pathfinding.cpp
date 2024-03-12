@@ -96,8 +96,15 @@ void PathFinding::paintEvent(QPaintEvent *event)
                     paint.drawEllipse(QPoint(x,y),2,2);
                 }
                 else if(map[i][j] != 0){
-                    paint.setPen(QColor(0,map[i][j],0));
-                    paint.setBrush(QColor(0,map[i][j],0));
+                    if(map[i][j] >= 255){
+                        paint.setPen(QColor(0,255,map[i][j]-255));
+                        paint.setBrush(QColor(0,255,map[i][j]-255));
+                    }
+                    else{
+                        paint.setPen(QColor(0,map[i][j],0));
+                        paint.setBrush(QColor(0,map[i][j],0));
+                    }
+
                     x = i*scale;
                     y = j*scale;
                     paint.drawEllipse(QPoint(x,y),1,1);
@@ -310,25 +317,49 @@ void PathFinding::loadMapImage(QImage& image)
                 if((i-2) > 0){
                     color = image.pixelColor(i-2,j);
                     if(color == Qt::white){
-                        image.setPixel(i-2, j, qRgb(128, 128, 128));
+                        image.setPixel(i-2, j, Qt::gray);
                     }
                 }
                 if((j-2) > 0){
                     color = image.pixelColor(i,j-2);
                     if(color == Qt::white){
-                        image.setPixel(i, j-2, qRgb(128, 128, 128));
+                        image.setPixel(i, j-2, Qt::gray);
                     }
                 }
                 if((i+2) < width){
                     color = image.pixelColor(i+2,j);
                     if(color == Qt::white){
-                        image.setPixel(i+2, j, qRgb(128, 128, 128));
+                        image.setPixel(i+2, j, Qt::gray);
                     }
                 }
                 if((j+2) < height){
                     color = image.pixelColor(i,j+2);
                     if(color == Qt::white){
-                        image.setPixel(i, j+2, qRgb(128, 128, 128));
+                        image.setPixel(i, j+2, Qt::gray);
+                    }
+                }
+                if((j+2) < height && (i+2) < width){
+                    color = image.pixelColor(i+2,j+2);
+                    if(color == Qt::white){
+                        image.setPixel(i+2, j+2, Qt::gray);
+                    }
+                }
+                if((j-2) > 0 && (i-2) > 0){
+                    color = image.pixelColor(i-2,j-2);
+                    if(color == Qt::white){
+                        image.setPixel(i-2, j-2, Qt::gray);
+                    }
+                }
+                if((j+2) < height && (i-2) > 0){
+                    color = image.pixelColor(i-2,j+2);
+                    if(color == Qt::white){
+                        image.setPixel(i-2, j+2, Qt::gray);
+                    }
+                }
+                if((j-2) > 0 && (i+2) < width){
+                    color = image.pixelColor(i+2,j-2);
+                    if(color == Qt::white){
+                        image.setPixel(i+2, j-2, Qt::gray);
                     }
                 }
             }
@@ -336,5 +367,30 @@ void PathFinding::loadMapImage(QImage& image)
     }
     diffH = indexH - startH;
     diffW = indexW - startW;
+
+    int count = 0;
+
+    for(int i = 0; i < width; i++){
+        for(int j = 0; j < height; j++){
+            color = image.pixelColor(i,j);
+            if(color == Qt::white){
+                for(int x= -2; x<= 2; x+=2){
+                    for(int y = -2; y <= 2; y+=2){
+                        if(i+x > 0 && i+x < width && j+y > 0 && j+y < height){
+                            color = image.pixelColor(i+x,j+y);
+                            if(color == Qt::gray){
+                                count++;
+                            }
+                        }
+                    }
+                }
+                if(count == 3){
+                    image.setPixel(i, j, Qt::gray);
+                }
+                count = 0;
+            }
+        }
+    }
+
     std::cout << "Height:" << diffH << ", Width:" << diffW << std::endl;
 }
