@@ -13,7 +13,7 @@ PathFinding::PathFinding(QWidget *parent) :
     ui(new Ui::PathFinding)
 {
     canDraw = false;
-    scale = 3;
+    scale = 4;
 
     goal.setX(-1);
     goal.setY(-1);
@@ -69,21 +69,21 @@ void PathFinding::paintEvent(QPaintEvent *event)
                     paint.setBrush(Qt::black);
                     x = i*scale;
                     y = j*scale;
-                    paint.drawEllipse(QPoint(x,y),2,2);
+                    paint.drawRect(x,y,3,3);
                 }
-                else if(map[i][j]==-2){
-                    paint.setPen(Qt::blue);
-                    paint.setBrush(Qt::blue);
-                    x = i*scale;
-                    y = j*scale;
-                    paint.drawEllipse(QPoint(x,y),2,2);
-                }
+//                else if(map[i][j]==-2){
+//                    paint.setPen(Qt::blue);
+//                    paint.setBrush(Qt::blue);
+//                    x = i*scale;
+//                    y = j*scale;
+//                    paint.drawEllipse(QPoint(x,y),2,2);
+//                }
                 else if(map[i][j]==-1){
                     paint.setPen(Qt::red);
                     paint.setBrush(Qt::red);
                     x = i*scale;
                     y = j*scale;
-                    paint.drawEllipse(QPoint(x,y),2,2);
+                    paint.drawRect(x,y,5,5);
                 }
                 else if(map[i][j] != 0){
                     if(map[i][j] >= 255){
@@ -97,15 +97,24 @@ void PathFinding::paintEvent(QPaintEvent *event)
 
                     x = i*scale;
                     y = j*scale;
-                    paint.drawEllipse(QPoint(x,y),1,1);
+                    paint.drawRect(x,y,2,2);
                 }
-                if(!path_corner_points.empty()){
-                    paint.setPen(Qt::magenta);
-                    paint.setBrush(Qt::magenta);
-                    for(int i=0; i < path_corner_points.size(); i++){
-                        paint.drawEllipse(path_corner_points[i].x()*scale,path_corner_points[i].y()*scale,1,1);
-                    }
-                }
+            }
+        }
+
+        if(!path_points.empty()){
+            paint.setPen(Qt::magenta);
+            paint.setBrush(Qt::magenta);
+            for(int i=0; i < path_points.size(); i++){
+                paint.drawRect(path_points[i].x()*scale,path_points[i].y()*scale,2,2);
+            }
+        }
+
+        if(!corner_points.empty()){
+            paint.setPen(Qt::darkBlue);
+            paint.setBrush(Qt::darkBlue);
+            for(int i=0; i < corner_points.size(); i++){
+                paint.drawRect(corner_points[i].x()*scale,corner_points[i].y()*scale,5,5);
             }
         }
 
@@ -183,8 +192,7 @@ void PathFinding::findPathInGrid(int startX, int startY, int targetX, int target
     int x{startX};
     int y{startY};
     int tempVal{-1};
-    int tempX{};
-    int tempY{};
+    int tempDir{-1};
 
     for (int i = 0; i < 4; ++i) {
         int nx = x + dr[i];
@@ -192,13 +200,11 @@ void PathFinding::findPathInGrid(int startX, int startY, int targetX, int target
 
         if(map[nx][ny] > tempVal){
             tempVal = map[nx][ny];
+            tempDir = i;
         }
     }
     map[x][y] = tempVal+1;
     tempVal = -1;
-
-    const int dr[] = {-1, 0, 1, 0};
-    const int dc[] = {0, 1, 0, -1};
 
     //i=0 -> x-1, y
     //i=1 -> x, y+1
@@ -206,27 +212,44 @@ void PathFinding::findPathInGrid(int startX, int startY, int targetX, int target
     //i=3 -> x, y-1
     while(map[x][y] != 3){
         if(map[x][y]-1 == map[x + dr[1]][y + dc[1]]){
+            if(tempDir != 1){
+                tempDir = 1;
+                corner_points.push_back(QPoint(x,y));
+            }
             x = x + dr[1];
             y = y + dc[1];
-            path_corner_points.push_back(QPoint(x,y));
+            path_points.push_back(QPoint(x,y));
         }
         else if(map[x][y]-1 == map[x + dr[3]][y + dc[3]]){
+            if(tempDir != 3){
+                tempDir = 3;
+                corner_points.push_back(QPoint(x,y));
+            }
             x = x + dr[3];
             y = y + dc[3];
-            path_corner_points.push_back(QPoint(x,y));
+            path_points.push_back(QPoint(x,y));
         }
         else if(map[x][y]-1 == map[x + dr[2]][y + dc[2]]){
+            if(tempDir != 2){
+                tempDir = 2;
+                corner_points.push_back(QPoint(x,y));
+            }
             x = x + dr[2];
             y = y + dc[2];
-            path_corner_points.push_back(QPoint(x,y));
+            path_points.push_back(QPoint(x,y));
         }
         else if(map[x][y]-1 == map[x + dr[0]][y + dc[0]]){
+            if(tempDir != 0){
+                tempDir = 0;
+                corner_points.push_back(QPoint(x,y));
+            }
             x = x + dr[0];
             y = y + dc[0];
-            path_corner_points.push_back(QPoint(x,y));
+            path_points.push_back(QPoint(x,y));
         }
     }
     map[startX][startY] = -1;
+    corner_points.push_back(QPoint(targetX, targetY));
 }
 
 

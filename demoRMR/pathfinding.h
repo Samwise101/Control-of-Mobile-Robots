@@ -42,7 +42,8 @@ private:
     int scale;
 
     std::vector<std::vector<int>> map;
-    std::vector<QPoint> path_corner_points;
+    std::vector<QPoint> path_points;
+    std::vector<QPoint> corner_points;
 
     bool canDraw;
 
