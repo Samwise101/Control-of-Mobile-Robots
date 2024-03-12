@@ -13,13 +13,13 @@ PathFinding::PathFinding(QWidget *parent) :
     ui(new Ui::PathFinding)
 {
     canDraw = false;
-    scale = 3;
+    scale = 2;
 
     goal.setX(-1);
     goal.setY(-1);
 
     robotStart.setX(20);
-    robotStart.setY(140);
+    robotStart.setY(180);
 
     image = QImage(":/images/map.bmp");
     loadMapImage(image);
@@ -367,30 +367,6 @@ void PathFinding::loadMapImage(QImage& image)
     }
     diffH = indexH - startH;
     diffW = indexW - startW;
-
-    int count = 0;
-
-    for(int i = 0; i < width; i++){
-        for(int j = 0; j < height; j++){
-            color = image.pixelColor(i,j);
-            if(color == Qt::white){
-                for(int x= -2; x<= 2; x+=2){
-                    for(int y = -2; y <= 2; y+=2){
-                        if(i+x > 0 && i+x < width && j+y > 0 && j+y < height){
-                            color = image.pixelColor(i+x,j+y);
-                            if(color == Qt::gray){
-                                count++;
-                            }
-                        }
-                    }
-                }
-                if(count == 3){
-                    image.setPixel(i, j, Qt::gray);
-                }
-                count = 0;
-            }
-        }
-    }
 
     std::cout << "Height:" << diffH << ", Width:" << diffW << std::endl;
 }
