@@ -94,8 +94,8 @@ void PathFinding::paintEvent(QPaintEvent *event)
                     paint.drawEllipse(QPoint(x,y),4,4);
                 }
                 else if(map[i][j] != 0){
-                    paint.setPen(Qt::magenta);
-                    paint.setBrush(Qt::magenta);
+                    paint.setPen(QColor(0,map[i][j],0));
+                    paint.setBrush(QColor(0,map[i][j],0));
                     x = i*scale;
                     y = j*scale;
                     paint.drawEllipse(QPoint(x,y),1,1);
@@ -173,13 +173,19 @@ void PathFinding::floodFill(int x, int y, int targetX, int targetY, int currValu
     std::queue<std::pair<int, int>> cells;
     cells.push({x,y});
     int k = 0;
+    int newValue{};
 
     while (!cells.empty()) {
         int r = cells.front().first;
         int c = cells.front().second;
         cells.pop();
 
-        if(r == 20 && c == 140){
+        if(map[r][c] == -2)
+            newValue = 2;
+        else
+            newValue = map[r][c];
+
+        if(r == targetX && c == targetY){
             std::cout << "Iam here" << std::endl;
             return;
         }
@@ -191,7 +197,7 @@ void PathFinding::floodFill(int x, int y, int targetX, int targetY, int currValu
                 cells.push({nx, ny});
                 k++;
                 if(map[nx][ny]!=-2 && map[nx][ny]!=-1){
-                    map[nx][ny] = currValue;
+                    map[nx][ny] = newValue + 1;
                 }
             }
         }
