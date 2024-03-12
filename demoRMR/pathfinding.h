@@ -59,6 +59,8 @@ private:
     void loadMapImage(QImage& image);
 
     void loadMapToVector(QImage& image);
+
+    void findHighestNumberInMap(int x, int y);
 };
 
 #endif // PATHFINDING_H

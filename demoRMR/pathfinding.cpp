@@ -6,6 +6,9 @@
 #include <stack>
 #include <utility>
 
+const int dr[] = {-1, 0, 1, 0};
+const int dc[] = {0, 1, 0, -1};
+
 PathFinding::PathFinding(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::PathFinding)
@@ -84,14 +87,14 @@ void PathFinding::paintEvent(QPaintEvent *event)
                     paint.setBrush(Qt::blue);
                     x = i*scale;
                     y = j*scale;
-                    paint.drawEllipse(QPoint(x,y),4,4);
+                    paint.drawEllipse(QPoint(x,y),2,2);
                 }
                 else if(map[i][j]==-1){
                     paint.setPen(Qt::red);
                     paint.setBrush(Qt::red);
                     x = i*scale;
                     y = j*scale;
-                    paint.drawEllipse(QPoint(x,y),4,4);
+                    paint.drawEllipse(QPoint(x,y),2,2);
                 }
                 else if(map[i][j] != 0){
                     paint.setPen(QColor(0,map[i][j],0));
@@ -127,7 +130,6 @@ void PathFinding::mousePressEvent(QMouseEvent *event)
             goal.setX(event->x()/scale);
             goal.setY(event->y()/scale);
             map[event->x()/scale][event->y()/scale]=-2;
-            update();
 
             floodFill(goal.x(), goal.y(), robotStart.x(), robotStart.y(),2);
         }
@@ -159,20 +161,32 @@ void PathFinding::loadMapToVector(QImage& image)
     }
 }
 
+void PathFinding::findHighestNumberInMap(int x, int y)
+{
+    std::cout << "targetX=" << x << ", targetY=" << y << std::endl;
+
+    if(map[x][y] == -1){
+        for (int i = 0; i < 4; ++i) {
+            int nx = x + dr[i];
+            int ny = y + dc[i];
+            std::cout << "x=" << nx << ", y=" << ny << ", val=" << map[nx][ny] << std::endl;
+        }
+    }
+}
 
 
-void PathFinding::floodFill(int x, int y, int targetX, int targetY, int currValue) {
+
+void PathFinding::floodFill(int x, int y, int targetX, int targetY, int currValue)
+{
     int rows = map.size();
     int cols = map[0].size();
-    const int dr[] = {-1, 0, 1, 0};
-    const int dc[] = {0, 1, 0, -1};
 
     if (x < 0 || x >= rows || y < 0 || y >= cols || map[x][y] == map[targetX][targetY])
         return;
 
     std::queue<std::pair<int, int>> cells;
     cells.push({x,y});
-    int k = 0;
+    int k{};
     int newValue{};
 
     while (!cells.empty()) {
@@ -185,9 +199,10 @@ void PathFinding::floodFill(int x, int y, int targetX, int targetY, int currValu
         else
             newValue = map[r][c];
 
-        if(r == targetX && c == targetY){
+        if(r > targetX-2 && r < targetX+2 && c > targetY-2 && c < targetY+2){
+            std::queue<std::pair<int, int>>().swap(cells);
             std::cout << "Iam here" << std::endl;
-            return;
+            break;
         }
 
         for (int d = 0; d < 4; ++d) {
@@ -203,6 +218,7 @@ void PathFinding::floodFill(int x, int y, int targetX, int targetY, int currValu
         }
     }
     std::cout << "k=" << k << std::endl;
+    findHighestNumberInMap(targetX, targetY);
 }
 
 void PathFinding::loadMapImage(QImage& image)
@@ -239,21 +255,18 @@ void PathFinding::loadMapImage(QImage& image)
                         image.setPixel(i-2, j, qRgb(128, 128, 128));
                     }
                 }
-
                 if((j-2) > 0){
                     color = image.pixelColor(i,j-2);
                     if(color == Qt::white){
                         image.setPixel(i, j-2, qRgb(128, 128, 128));
                     }
                 }
-
                 if((i+2) < width){
                     color = image.pixelColor(i+2,j);
                     if(color == Qt::white){
                         image.setPixel(i+2, j, qRgb(128, 128, 128));
                     }
                 }
-
                 if((j+2) < height){
                     color = image.pixelColor(i,j+2);
                     if(color == Qt::white){
@@ -263,7 +276,6 @@ void PathFinding::loadMapImage(QImage& image)
             }
         }
     }
-
     diffH = indexH - startH;
     diffW = indexW - startW;
     std::cout << "Height:" << diffH << ", Width:" << diffW << std::endl;
