@@ -3,8 +3,7 @@
 #include <QRect>
 #include <iostream>
 #include <queue>
-#include <stack>
-#include <utility>
+#include <array>
 
 const int dr[] = {-1, 0, 1, 0};
 const int dc[] = {0, 1, 0, -1};
@@ -103,6 +102,13 @@ void PathFinding::paintEvent(QPaintEvent *event)
                     y = j*scale;
                     paint.drawEllipse(QPoint(x,y),1,1);
                 }
+                if(!path_corner_points.empty()){
+                    paint.setPen(Qt::magenta);
+                    paint.setBrush(Qt::magenta);
+                    for(int i=0; i < path_corner_points.size(); i++){
+                        paint.drawEllipse(path_corner_points[i].x()*scale,path_corner_points[i].y()*scale,1,1);
+                    }
+                }
             }
         }
 
@@ -132,6 +138,7 @@ void PathFinding::mousePressEvent(QMouseEvent *event)
             map[event->x()/scale][event->y()/scale]=-2;
 
             floodFill(goal.x(), goal.y(), robotStart.x(), robotStart.y(),2);
+            findPathInGrid(robotStart.x(), robotStart.y(), goal.x(), goal.y());
         }
     }
 }
@@ -161,7 +168,7 @@ void PathFinding::loadMapToVector(QImage& image)
     }
 }
 
-void PathFinding::findHighestNumberInMap(int x, int y)
+void PathFinding::findHighestNumberInMap(const int& x, const int& y)
 {
     std::cout << "targetX=" << x << ", targetY=" << y << std::endl;
 
@@ -174,6 +181,57 @@ void PathFinding::findHighestNumberInMap(int x, int y)
     }
 }
 
+void PathFinding::findPathInGrid(int startX, int startY, int targetX, int targetY)
+{
+    int x{startX};
+    int y{startY};
+    int tempVal{-1};
+    int tempX{};
+    int tempY{};
+
+    for (int i = 0; i < 4; ++i) {
+        int nx = x + dr[i];
+        int ny = y + dc[i];
+
+        if(map[nx][ny] > tempVal){
+            tempVal = map[nx][ny];
+        }
+    }
+    map[x][y] = tempVal+1;
+    tempVal = -1;
+
+    const int dr[] = {-1, 0, 1, 0};
+    const int dc[] = {0, 1, 0, -1};
+
+    //i=0 -> x-1, y
+    //i=1 -> x, y+1
+    //i=2 -> x+1, y
+    //i=3 -> x, y-1
+    while(map[x][y] != 3){
+        if(map[x][y]-1 == map[x + dr[1]][y + dc[1]]){
+            x = x + dr[1];
+            y = y + dc[1];
+            path_corner_points.push_back(QPoint(x,y));
+        }
+        else if(map[x][y]-1 == map[x + dr[3]][y + dc[3]]){
+            x = x + dr[3];
+            y = y + dc[3];
+            path_corner_points.push_back(QPoint(x,y));
+        }
+        else if(map[x][y]-1 == map[x + dr[2]][y + dc[2]]){
+            x = x + dr[2];
+            y = y + dc[2];
+            path_corner_points.push_back(QPoint(x,y));
+        }
+        else if(map[x][y]-1 == map[x + dr[0]][y + dc[0]]){
+            x = x + dr[0];
+            y = y + dc[0];
+            path_corner_points.push_back(QPoint(x,y));
+        }
+    }
+    map[startX][startY] = -1;
+}
+
 
 
 void PathFinding::floodFill(int x, int y, int targetX, int targetY, int currValue)
@@ -184,14 +242,14 @@ void PathFinding::floodFill(int x, int y, int targetX, int targetY, int currValu
     if (x < 0 || x >= rows || y < 0 || y >= cols || map[x][y] == map[targetX][targetY])
         return;
 
-    std::queue<std::pair<int, int>> cells;
+    std::queue<QPoint> cells;
     cells.push({x,y});
     int k{};
     int newValue{};
 
     while (!cells.empty()) {
-        int r = cells.front().first;
-        int c = cells.front().second;
+        int r = cells.front().x();
+        int c = cells.front().y();
         cells.pop();
 
         if(map[r][c] == -2)
@@ -200,7 +258,7 @@ void PathFinding::floodFill(int x, int y, int targetX, int targetY, int currValu
             newValue = map[r][c];
 
         if(r > targetX-2 && r < targetX+2 && c > targetY-2 && c < targetY+2){
-            std::queue<std::pair<int, int>>().swap(cells);
+            std::queue<QPoint>().swap(cells);
             std::cout << "Iam here" << std::endl;
             break;
         }

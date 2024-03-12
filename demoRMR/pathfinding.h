@@ -42,6 +42,7 @@ private:
     int scale;
 
     std::vector<std::vector<int>> map;
+    std::vector<QPoint> path_corner_points;
 
     bool canDraw;
 
@@ -60,7 +61,9 @@ private:
 
     void loadMapToVector(QImage& image);
 
-    void findHighestNumberInMap(int x, int y);
+    void findHighestNumberInMap(const int& x, const int& y);
+
+    void findPathInGrid(int startX, int startY, int targetX, int targetY);
 };
 
 #endif // PATHFINDING_H
