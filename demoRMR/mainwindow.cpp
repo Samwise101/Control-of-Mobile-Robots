@@ -64,9 +64,9 @@ MainWindow::MainWindow(QWidget *parent) :
     robotCoord.x = 0.0;
     robotCoord.y = 0.0;
 
-    robotCoordMap.a = -1.0;
-    robotCoordMap.x = -1.0;
-    robotCoordMap.y = -1.0;
+    robotCoordMap.a = 0.0;
+    robotCoordMap.x = 0.5*2;
+    robotCoordMap.y = 4.8*2;
 
     datacounter = 0;
     canStart = false;
@@ -78,7 +78,7 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     isStoped = true;
-    mappingThread.join();
+//    mappingThread.join();
     delete ui;
 }
 
@@ -412,11 +412,12 @@ void MainWindow::on_pushButton_9_clicked()
 
 void MainWindow::on_pushButton_10_clicked()
 {
-    PathFinding pathFindDialog(robotCoordMap);
-    pathFindDialog.exec();
-    QFile file("map2.bmp");
-    pathFindDialog.getPixmap().save(&file, "BMP");
-    std::vector<QPoint> points = pathFindDialog.getCorner_points();
+
+    PathFinding pathFinding(robotCoordMap.x*10, robotCoordMap.y*10, robotCoordMap);
+
+    pathFinding.exec();
+
+    std::vector<QPoint> points = pathFinding.getCorner_points();
     if(points.empty())
         return;
 
@@ -429,9 +430,6 @@ void MainWindow::on_pushButton_10_clicked()
         set_point_map.xn.insert(set_point_map.xn.begin(),points[i].x()/20.0);
         set_point_map.yn.insert(set_point_map.yn.begin(),points[i].y()/20.0);
     }
-
-    robotCoordMap.x/=2.0;
-    robotCoordMap.y/=2.0;
 
     std::cout << "set_point_map size=" << set_point_map.xn.size() << std::endl;
 }

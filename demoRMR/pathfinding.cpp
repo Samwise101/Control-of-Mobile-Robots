@@ -8,7 +8,7 @@
 const int dr[] = {-1, 0, 1, 0};
 const int dc[] = {0, 1, 0, -1};
 
-PathFinding::PathFinding(RobotCoordRotation& robotCoord, QWidget *parent) :
+PathFinding::PathFinding(int robotX, int robotY, RobotCoordRotation& robotCoord, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::PathFinding)
 {
@@ -18,11 +18,11 @@ PathFinding::PathFinding(RobotCoordRotation& robotCoord, QWidget *parent) :
     goal.setX(-1);
     goal.setY(-1);
 
-    robotStart.setX(10);
-    robotStart.setY(95);
+    robotStart.setX(robotX*2.0);
+    robotStart.setY(robotY*2.0);
 
-    robotCoord.x = robotStart.x()/10.0; // na metre /10
-    robotCoord.y = robotStart.y()/10.0;
+    robotCoord.x = robotStart.x()/20.0; // na metre /10
+    robotCoord.y = robotStart.y()/20.0;
     robotCoord.a = 0;
 
     image = QImage(":/images/map.bmp");
@@ -329,52 +329,52 @@ void PathFinding::loadMapImage(QImage& image)
                 if(i < startW){
                     startW = i;
                 }
-                if((i-1) > 0){
-                    color = image.pixelColor(i-1,j);
+                if((i-2) > 0){
+                    color = image.pixelColor(i-2,j);
                     if(color == Qt::white){
-                        image.setPixel(i-1, j, qRgb(128, 128, 128));
+                        image.setPixel(i-2, j, qRgb(128, 128, 128));
                     }
                 }
-                if((j-1) > 0){
-                    color = image.pixelColor(i,j-1);
+                if((j-2) > 0){
+                    color = image.pixelColor(i,j-2);
                     if(color == Qt::white){
-                        image.setPixel(i, j-1, qRgb(128, 128, 128));
+                        image.setPixel(i, j-2, qRgb(128, 128, 128));
                     }
                 }
-                if((i+1) < width){
-                    color = image.pixelColor(i+1,j);
+                if((i+2) < width){
+                    color = image.pixelColor(i+2,j);
                     if(color == Qt::white){
-                        image.setPixel(i+1, j, qRgb(128, 128, 128));
+                        image.setPixel(i+2, j, qRgb(128, 128, 128));
                     }
                 }
-                if((j+1) < height){
-                    color = image.pixelColor(i,j+1);
+                if((j+2) < height){
+                    color = image.pixelColor(i,j+2);
                     if(color == Qt::white){
-                        image.setPixel(i, j+1, qRgb(128, 128, 128));
+                        image.setPixel(i, j+2, qRgb(128, 128, 128));
                     }
                 }
-                if((j+1) < height && (i+1) < width){
-                    color = image.pixelColor(i+1,j+1);
+                if((j+2) < height && (i+2) < width){
+                    color = image.pixelColor(i+2,j+2);
                     if(color == Qt::white){
-                        image.setPixel(i+1, j+1, qRgb(128, 128, 128));
+                        image.setPixel(i+2, j+2, qRgb(128, 128, 128));
                     }
                 }
-                if((j-1) > 0 && (i-1) > 0){
-                    color = image.pixelColor(i-1,j-1);
+                if((j-2) > 0 && (i-2) > 0){
+                    color = image.pixelColor(i-2,j-2);
                     if(color == Qt::white){
-                        image.setPixel(i-1, j-1, qRgb(128, 128, 128));
+                        image.setPixel(i-2, j-2, qRgb(128, 128, 128));
                     }
                 }
-                if((j+1) < height && (i-1) > 0){
-                    color = image.pixelColor(i-1,j+1);
+                if((j+2) < height && (i-2) > 0){
+                    color = image.pixelColor(i-2,j+2);
                     if(color == Qt::white){
-                        image.setPixel(i-1, j+1, qRgb(128, 128, 128));
+                        image.setPixel(i-2, j+2, qRgb(128, 128, 128));
                     }
                 }
-                if((j-1) > 0 && (i+1) < width){
-                    color = image.pixelColor(i+1,j-1);
+                if((j-2) > 0 && (i+2) < width){
+                    color = image.pixelColor(i+2,j-2);
                     if(color == Qt::white){
-                        image.setPixel(i+1, j-1, qRgb(128, 128, 128));
+                        image.setPixel(i+2, j-2, qRgb(128, 128, 128));
                     }
                 }
             }

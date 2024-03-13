@@ -23,7 +23,7 @@ class PathFinding : public QDialog
     Q_OBJECT
 
 public:
-    explicit PathFinding(RobotCoordRotation& robotCoord,QWidget *parent = nullptr);
+    explicit PathFinding(int robotX, int robotY,RobotCoordRotation& robotCoord,QWidget *parent = nullptr);
     ~PathFinding();
 
     QPixmap getPixmap() const;
