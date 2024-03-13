@@ -8,7 +8,7 @@
 const int dr[] = {-1, 0, 1, 0};
 const int dc[] = {0, 1, 0, -1};
 
-PathFinding::PathFinding(int robotX, int robotY, RobotCoordRotation& robotCoord, QWidget *parent) :
+PathFinding::PathFinding(double robotX, double robotY, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::PathFinding)
 {
@@ -18,12 +18,8 @@ PathFinding::PathFinding(int robotX, int robotY, RobotCoordRotation& robotCoord,
     goal.setX(-1);
     goal.setY(-1);
 
-    robotStart.setX(robotX*2.0);
-    robotStart.setY(robotY*2.0);
-
-    robotCoord.x = robotStart.x()/20.0; // na metre /10
-    robotCoord.y = robotStart.y()/20.0;
-    robotCoord.a = 0;
+    robotStart.setX(robotX*20);
+    robotStart.setY(robotY*20);
 
     image = QImage(":/images/map.bmp");
     loadMapImage(image);

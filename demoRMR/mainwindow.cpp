@@ -65,8 +65,8 @@ MainWindow::MainWindow(QWidget *parent) :
     robotCoord.y = 0.0;
 
     robotCoordMap.a = 0.0;
-    robotCoordMap.x = 0.5*2;
-    robotCoordMap.y = 4.8*2;
+    robotCoordMap.x = 0.5;
+    robotCoordMap.y = 4.8;
 
     datacounter = 0;
     canStart = false;
@@ -413,7 +413,7 @@ void MainWindow::on_pushButton_9_clicked()
 void MainWindow::on_pushButton_10_clicked()
 {
 
-    PathFinding pathFinding(robotCoordMap.x*10, robotCoordMap.y*10, robotCoordMap);
+    PathFinding pathFinding(robotCoordMap.x, robotCoordMap.y);
 
     pathFinding.exec();
 
