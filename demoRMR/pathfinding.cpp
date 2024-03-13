@@ -19,10 +19,10 @@ PathFinding::PathFinding(RobotCoordRotation& robotCoord, QWidget *parent) :
     goal.setY(-1);
 
     robotStart.setX(10);
-    robotStart.setY(90);
+    robotStart.setY(95);
 
-    robotCoord.x = robotStart.x()/10; // na metre /10
-    robotCoord.y = robotStart.y()/10;
+    robotCoord.x = robotStart.x()/10.0; // na metre /10
+    robotCoord.y = robotStart.y()/10.0;
     robotCoord.a = 0;
 
     image = QImage(":/images/map.bmp");
@@ -85,7 +85,7 @@ void PathFinding::paintEvent(QPaintEvent *event)
                     paint.setBrush(Qt::red);
                     x = i*scale;
                     y = j*scale;
-                    paint.drawRect(x,y,5,5);
+                    paint.drawRect(x,y,3,3);
                 }
                 else if(map[i][j] != 0){
                     if(map[i][j] >= 255){
@@ -108,7 +108,7 @@ void PathFinding::paintEvent(QPaintEvent *event)
             paint.setPen(Qt::magenta);
             paint.setBrush(Qt::magenta);
             for(int i=0; i < path_points.size(); i++){
-                paint.drawRect(path_points[i].x()*scale,path_points[i].y()*scale,2,2);
+                paint.drawRect(path_points[i].x()*scale,path_points[i].y()*scale,1,1);
             }
         }
 
@@ -116,7 +116,7 @@ void PathFinding::paintEvent(QPaintEvent *event)
             paint.setPen(Qt::darkBlue);
             paint.setBrush(Qt::darkBlue);
             for(int i=0; i < corner_points.size(); i++){
-                paint.drawRect(corner_points[i].x()*scale,corner_points[i].y()*scale,5,5);
+                paint.drawRect(corner_points[i].x()*scale,corner_points[i].y()*scale,3,3);
             }
         }
 
@@ -153,8 +153,8 @@ void PathFinding::mousePressEvent(QMouseEvent *event)
 
 void PathFinding::loadMapToVector(QImage& image)
 {
-    map.resize(diffW);
-    for(int i = 0; i < diffW; i++){
+    map.resize(diffH);
+    for(int i = 0; i < diffH; i++){
         map[i].resize(diffH,0);
     }
 

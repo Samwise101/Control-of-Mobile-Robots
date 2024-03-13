@@ -16,13 +16,16 @@ void Regulator::robot_movement_reg(const double& setX, const double& setY, const
     double rot_dead_zone = PI/4;
 
     double ex = (setX - robotCoord.x)*1000.0;
-    double ey = (setY - robotCoord.y)*1000.0;
+    double ey = -(setY - robotCoord.y)*1000.0;
     double eDist = sqrt(ex*ex + ey*ey);
+
 
     treshHold = treshHold*1000.0;
 
     double eRot = std::atan2(ey,ex) - robotCoord.a*TO_RADIANS;
     eRot = std::atan2(std::sin(eRot), std::cos(eRot));
+
+    std::cout << "Dist=" << eDist << ", Rot=" << eRot << ", SetX=" << setX << ", SetY=" << setY << std::endl;
 
     if(eDist < treshHold){
         integ = 0;
@@ -40,7 +43,7 @@ void Regulator::robot_movement_reg(const double& setX, const double& setY, const
 
     if(eRot < rot_dead_zone && eRot > -rot_dead_zone){
 
-        robot_motion_param.trans_speed = robot_motion_param.u_trans*eDist + robot_motion_param.u_integral*integ;
+        robot_motion_param.trans_speed = robot_motion_param.u_trans*eDist;
 
         if(old_speed < robot_motion_param.trans_speed){
             robot_motion_param.trans_speed = old_speed + 2.5;

@@ -426,9 +426,12 @@ void MainWindow::on_pushButton_10_clicked()
     }
 
     for(int i = 0; i < points.size(); i++){
-        set_point_map.xn.insert(set_point_map.xn.begin(),points[i].x()/10);
-        set_point_map.yn.insert(set_point_map.yn.begin(),points[i].y()/10);
+        set_point_map.xn.insert(set_point_map.xn.begin(),points[i].x()/20.0);
+        set_point_map.yn.insert(set_point_map.yn.begin(),points[i].y()/20.0);
     }
+
+    robotCoordMap.x/=2.0;
+    robotCoordMap.y/=2.0;
 
     std::cout << "set_point_map size=" << set_point_map.xn.size() << std::endl;
 }
