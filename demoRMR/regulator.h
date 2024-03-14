@@ -23,16 +23,14 @@ class Regulator
 public:
     Regulator();
 
-    void robot_movement_reg(const double& setX, const double& setY, const RobotCoordRotation &robotCoord, robot_motion& robot_motion_param);
+    void robot_movement_reg(const double& setX, const double& setY, const RobotCoordRotation &robotCoord, robot_motion& robot_motion_param, const int sign);
 
 private:
-
     bool missionStarted;
     bool high_setpoint_angle;
 
-    double integ;
-
     double old_speed;
+    double old_rot_speed;
 };
 
 #endif // REGULATOR_H

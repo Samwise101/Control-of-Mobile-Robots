@@ -18,7 +18,7 @@ class odometry
 public:
     odometry();
 
-    void robot_odometry(const TKobukiData& Kobuki_data, bool useGyro, RobotCoordRotation& robotCoord);
+    void robot_odometry(const TKobukiData& Kobuki_data, bool useGyro, RobotCoordRotation& robotCoord, const int sign);
 
 private:
 

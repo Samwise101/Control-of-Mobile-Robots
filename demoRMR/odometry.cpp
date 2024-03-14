@@ -8,7 +8,7 @@ odometry::odometry()
     missionStarted = false;
 }
 
-void odometry::robot_odometry(const TKobukiData& Kobuki_data, bool useGyro, RobotCoordRotation& robotCoord)
+void odometry::robot_odometry(const TKobukiData& Kobuki_data, bool useGyro, RobotCoordRotation& robotCoord, const int sign)
 {
     int encl_old{0};
     int encr_old{0};
@@ -80,6 +80,6 @@ void odometry::robot_odometry(const TKobukiData& Kobuki_data, bool useGyro, Robo
     }
 
     robotCoord.x = robotCoord.x + lk*cos(robotCoord.a*TO_RADIANS);
-    robotCoord.y = robotCoord.y - lk*sin(robotCoord.a*TO_RADIANS);
+    robotCoord.y = robotCoord.y + sign*lk*sin(robotCoord.a*TO_RADIANS);
     std::cout << "Robot X=" << robotCoord.x << ", Robot Y=" << robotCoord.y << std::endl;
 }

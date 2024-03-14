@@ -15,6 +15,9 @@ PathFinding::PathFinding(double robotX, double robotY, QWidget *parent) :
     canDraw = false;
     scale = 4;
 
+    clickCounter = 0;
+    oldClickCounter = 0;
+
     goal.setX(-1);
     goal.setY(-1);
 
@@ -55,9 +58,23 @@ const std::vector<QPoint>& PathFinding::getCorner_points() const
     return corner_points;
 }
 
+int PathFinding::getClickCounter() const
+{
+    return clickCounter;
+}
+
+void PathFinding::setClickCounter(int newClickCounter)
+{
+    clickCounter = newClickCounter;
+}
+
+void PathFinding::setOldClickCounter(int newOldClickCounter)
+{
+    oldClickCounter = newOldClickCounter;
+}
+
 void PathFinding::paintEvent(QPaintEvent *event)
 {
-
     if(canDraw){
         QPainter paint(pix);
         pix->fill( Qt::white);
@@ -124,16 +141,21 @@ void PathFinding::paintEvent(QPaintEvent *event)
 void PathFinding::mousePressEvent(QMouseEvent *event)
 {
     //std::cout << "X=" << event->x() << ", Y=" << event->y() << std::endl;
-    if (event->button() == Qt::LeftButton) {
+    if (event->button() == Qt::LeftButton && clickCounter < 3) {
         if(event->x() < 0 || event->x() > diffW*scale)
             return;
         if(event->y() < 0 || event->y() > diffH*scale)
             return;
 
+        if(oldClickCounter < clickCounter){
+            clearPathInGrid();
+            oldClickCounter++;
+        }
+
         std::cout << "X=" << event->x() << ", Y=" << event->y() << std::endl;
 
         QImage imageTemp = pix->toImage();
-        if(imageTemp.pixelColor(event->x(), event->y()) == Qt::white){
+        if(map[event->x()/scale][event->y()/scale] == 0 || map[event->x()/scale][event->y()/scale] > 1){
             if(goal.x() != -1 && goal.y() != -1){
                 map[goal.x()][goal.y()] = 0;
             }
@@ -144,6 +166,7 @@ void PathFinding::mousePressEvent(QMouseEvent *event)
             floodFill(goal.x(), goal.y(), robotStart.x(), robotStart.y(),2);
             findPathInGrid(robotStart.x(), robotStart.y(), goal.x(), goal.y());
         }
+        clickCounter++;
     }
 }
 
@@ -248,6 +271,19 @@ void PathFinding::findPathInGrid(int startX, int startY, int targetX, int target
     }
     map[startX][startY] = -1;
     corner_points.push_back(QPoint(targetX, targetY));
+    robotStart.setX(goal.x());
+    robotStart.setY(goal.y());
+}
+
+void PathFinding::clearPathInGrid()
+{
+    for(int i = 0; i < map.size(); i++){
+        for(int j = 0; j < map[0].size(); j++){
+            if(map[i][j] > 1){
+                map[i][j] = 0;
+            }
+        }
+    }
 }
 
 
@@ -325,52 +361,52 @@ void PathFinding::loadMapImage(QImage& image)
                 if(i < startW){
                     startW = i;
                 }
-                if((i-2) > 0){
-                    color = image.pixelColor(i-2,j);
+                if((i-3) > 0){
+                    color = image.pixelColor(i-3,j);
                     if(color == Qt::white){
-                        image.setPixel(i-2, j, qRgb(128, 128, 128));
+                        image.setPixel(i-3, j, qRgb(128, 128, 128));
                     }
                 }
-                if((j-2) > 0){
-                    color = image.pixelColor(i,j-2);
+                if((j-3) > 0){
+                    color = image.pixelColor(i,j-3);
                     if(color == Qt::white){
-                        image.setPixel(i, j-2, qRgb(128, 128, 128));
+                        image.setPixel(i, j-3, qRgb(128, 128, 128));
                     }
                 }
-                if((i+2) < width){
-                    color = image.pixelColor(i+2,j);
+                if((i+3) < width){
+                    color = image.pixelColor(i+3,j);
                     if(color == Qt::white){
-                        image.setPixel(i+2, j, qRgb(128, 128, 128));
+                        image.setPixel(i+3, j, qRgb(128, 128, 128));
                     }
                 }
-                if((j+2) < height){
-                    color = image.pixelColor(i,j+2);
+                if((j+3) < height){
+                    color = image.pixelColor(i,j+3);
                     if(color == Qt::white){
-                        image.setPixel(i, j+2, qRgb(128, 128, 128));
+                        image.setPixel(i, j+3, qRgb(128, 128, 128));
                     }
                 }
-                if((j+2) < height && (i+2) < width){
-                    color = image.pixelColor(i+2,j+2);
+                if((j+3) < height && (i+3) < width){
+                    color = image.pixelColor(i+3,j+3);
                     if(color == Qt::white){
-                        image.setPixel(i+2, j+2, qRgb(128, 128, 128));
+                        image.setPixel(i+3, j+3, qRgb(128, 128, 128));
                     }
                 }
-                if((j-2) > 0 && (i-2) > 0){
-                    color = image.pixelColor(i-2,j-2);
+                if((j-3) > 0 && (i-3) > 0){
+                    color = image.pixelColor(i-3,j-3);
                     if(color == Qt::white){
-                        image.setPixel(i-2, j-2, qRgb(128, 128, 128));
+                        image.setPixel(i-3, j-3, qRgb(128, 128, 128));
                     }
                 }
-                if((j+2) < height && (i-2) > 0){
-                    color = image.pixelColor(i-2,j+2);
+                if((j+3) < height && (i-3) > 0){
+                    color = image.pixelColor(i-3,j+3);
                     if(color == Qt::white){
-                        image.setPixel(i-2, j+2, qRgb(128, 128, 128));
+                        image.setPixel(i-3, j+3, qRgb(128, 128, 128));
                     }
                 }
-                if((j-2) > 0 && (i+2) < width){
-                    color = image.pixelColor(i+2,j-2);
+                if((j-3) > 0 && (i+3) < width){
+                    color = image.pixelColor(i+3,j-3);
                     if(color == Qt::white){
-                        image.setPixel(i+2, j-2, qRgb(128, 128, 128));
+                        image.setPixel(i+3, j-3, qRgb(128, 128, 128));
                     }
                 }
             }

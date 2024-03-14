@@ -30,6 +30,11 @@ public:
 
     const std::vector<QPoint>& getCorner_points() const;
 
+    int getClickCounter() const;
+    void setClickCounter(int newClickCounter);
+
+    void setOldClickCounter(int newOldClickCounter);
+
 private:
     Ui::PathFinding *ui;
 
@@ -38,6 +43,8 @@ private:
 
     QPoint robotStart;
     QPoint goal;
+    QPoint startPoint;
+
     int indexH;
     int indexW;
     int startH;
@@ -45,6 +52,9 @@ private:
     int diffH;
     int diffW;
     int scale;
+
+    int clickCounter;
+    int oldClickCounter;
 
     std::vector<std::vector<int>> map;
     std::vector<QPoint> path_points;
@@ -70,6 +80,8 @@ private:
     void findHighestNumberInMap(const int& x, const int& y);
 
     void findPathInGrid(int startX, int startY, int targetX, int targetY);
+
+    void clearPathInGrid();
 };
 
 #endif // PATHFINDING_H

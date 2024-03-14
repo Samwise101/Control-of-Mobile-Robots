@@ -156,18 +156,23 @@ void MainWindow::setUiValues(double robotX,double robotY,double robotFi)
     ui->lineEdit_4->setText(QString::number(robotFi));
 }
 
+void MainWindow::setUiValuesForMap(double setPointX, double setPointY)
+{
+    ui->xn->setText(QString::number(setPointX, 10, 3));
+    ui->yn->setText(QString::number(setPointY, 10, 3));
+}
+
 
 int MainWindow::processThisRobot(TKobukiData robotdata)
 {
     if(mission_started){
-
         if(controlType == 0 && !set_point.xn.empty()){
-            robot_odometry.robot_odometry(robotdata, true, robotCoord);
-            robot_motion_reg.robot_movement_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1], robotCoord, robot_motion_param);
+            robot_odometry.robot_odometry(robotdata, true, robotCoord, 1);
+            robot_motion_reg.robot_movement_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1], robotCoord, robot_motion_param,1);
         }
         else if(controlType == 1 && !set_point_map.xn.empty() && robotCoordMap.x != -1){
-            robot_odometry.robot_odometry(robotdata, true, robotCoordMap);
-            robot_motion_reg.robot_movement_reg(set_point_map.xn[set_point_map.xn.size() - 1], set_point_map.yn[set_point_map.yn.size() - 1], robotCoordMap, robot_motion_param);
+            robot_odometry.robot_odometry(robotdata, true, robotCoordMap, -1);
+            robot_motion_reg.robot_movement_reg(set_point_map.xn[set_point_map.xn.size() - 1], set_point_map.yn[set_point_map.yn.size() - 1], robotCoordMap, robot_motion_param,-1);
         }
 
         forwardspeed = robot_motion_param.trans_speed;
@@ -190,6 +195,10 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
                 if(set_point_map.xn.empty()){
                     mission_started = false;
                     ui->startMissionButton->setText("Start mission");
+                }
+                else{
+                    int index = set_point_map.xn.size()-1;
+                    emit uiValuesChangedMap(set_point_map.xn[index], set_point_map.yn[index]);
                 }
             }
         }
@@ -216,7 +225,10 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 
     if(datacounter%5)
     {
-        emit uiValuesChanged(robotCoord.x, robotCoord.y, robotCoord.a);
+        if(controlType == 0)
+            emit uiValuesChanged(robotCoord.x, robotCoord.y, robotCoord.a);
+        else
+            emit uiValuesChanged(robotCoordMap.x, robotCoordMap.y, robotCoordMap.a);
     }
     datacounter++;
 
@@ -287,6 +299,7 @@ void MainWindow::on_startButton_clicked() //start button
     robot_data.camera_link = "http://" + robot_data.robot_ip + ":"+robot_data.camera_port + "/stream.mjpg";
 
     connect(this,SIGNAL(uiValuesChanged(double,double,double)),this,SLOT(setUiValues(double,double,double)));
+    connect(this,SIGNAL(uiValuesChangedMap(double, double)),this,SLOT(setUiValuesForMap(double, double)));
 
     robot.setLaserParameters(robot_data.robot_ip,robot_data.lidar_port,robot_data.lidar_port_me,/*[](LaserMeasurement dat)->int{std::cout<<"som z lambdy callback"<<std::endl;return 0;}*/std::bind(&MainWindow::processThisLidar,this,std::placeholders::_1));
     robot.setRobotParameters(robot_data.robot_ip,robot_data.robot_port,robot_data.robot_port_me,std::bind(&MainWindow::processThisRobot,this,std::placeholders::_1));
@@ -384,6 +397,8 @@ void MainWindow::on_startMissionButton_clicked()
         if(!mission_started && !set_point_map.xn.empty()){
             mission_started = true;
             ui->startMissionButton->setText("Stop mission");
+            int index = set_point_map.xn.size()-1;
+            emit uiValuesChangedMap(set_point_map.xn[index], set_point_map.yn[index]);
         }
         else if(mission_started){
             mission_started = false;
@@ -417,6 +432,9 @@ void MainWindow::on_pushButton_10_clicked()
 
     pathFinding.exec();
 
+    pathFinding.setClickCounter(0);
+    pathFinding.setOldClickCounter(0);
+
     std::vector<QPoint> points = pathFinding.getCorner_points();
     if(points.empty())
         return;
@@ -430,6 +448,8 @@ void MainWindow::on_pushButton_10_clicked()
         set_point_map.xn.insert(set_point_map.xn.begin(),points[i].x()/20.0);
         set_point_map.yn.insert(set_point_map.yn.begin(),points[i].y()/20.0);
     }
+
+    points.clear();
 
     std::cout << "set_point_map size=" << set_point_map.xn.size() << std::endl;
 }

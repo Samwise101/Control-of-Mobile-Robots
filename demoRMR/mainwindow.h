@@ -158,8 +158,10 @@ private:
      double rotationspeed;//omega/s
 public slots:
      void setUiValues(double robotX,double robotY,double robotFi);
+    void setUiValuesForMap(double setPointX, double setPointY);
 signals:
      void uiValuesChanged(double newrobotX,double newrobotY,double newrobotFi); ///toto nema telo
+     void uiValuesChangedMap(double setPointX, double setPointY);
 };
 
 
