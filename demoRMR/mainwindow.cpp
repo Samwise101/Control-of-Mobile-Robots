@@ -145,6 +145,26 @@ void MainWindow::paintEvent(QPaintEvent *event)
                     painter.drawEllipse(QPoint(xp, yp),2,2);
             }
             mux2.unlock();
+
+            if(!set_point.xn.empty()){
+
+                for(int i = 0; i < set_point.xn.size(); i++){
+                    double ex = (set_point.xn[0] - robotCoord.x)*100;
+                    double ey = (set_point.yn[0] - robotCoord.y)*100;
+                    double eDist = sqrt(ex*ex + ey*ey);
+
+                    double eRot = std::atan2(ey,ex) - robotCoord.a*TO_RADIANS;
+                    eRot = std::atan2(std::sin(eRot), std::cos(eRot));
+
+                    int xp=rect.width()-(rect.width()/2+eDist*sin(-eRot))+rect.topLeft().x();
+                    int yp=rect.height()-(rect.height()/2+eDist*cos(-eRot))+rect.topLeft().y();
+
+                    std::cout << "Xp = " << xp << ", Yp = " << yp << std::endl;
+                    std::cout << "RectW=" << rect.width() << ", " << "RectH=" << rect.width() << std::endl;
+
+                    painter.drawEllipse(QPoint(xp, yp),2,2);
+                }
+            }
         }
     }
 }
