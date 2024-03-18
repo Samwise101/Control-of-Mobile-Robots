@@ -24,7 +24,7 @@ void Regulator::robot_movement_reg(const double& setX, const double& setY, const
     double eRot = std::atan2(ey,ex) - robotCoord.a*TO_RADIANS;
     eRot = std::atan2(std::sin(eRot), std::cos(eRot));
 
-    std::cout << "Dist=" << eDist << ", Rot=" << eRot << ", SetX=" << setX << ", SetY=" << setY << std::endl;
+   // std::cout << "Dist=" << eDist << ", Rot=" << eRot << ", SetX=" << setX << ", SetY=" << setY << std::endl;
 
     if(eDist < treshHold){
         robot_motion_param.rot_speed = 0.0;

@@ -7,41 +7,60 @@
 #include <chrono>
 
 
-void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, double robotA)
+void MainWindow::get_obstacle_to_goal(double robotX, double robotY, double robotA, double b)
 {
     //std::cout << "X=" << robotX << ", Y=" << robotY << ", A=" << robotA << std::endl;
-    double robotX2 = robotX;
-    double robotY2 = -robotY;
-    double robotAngle = robotA;
 
     mux2.lock();
-    for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k+=2)
+    \
+    if(set_point.xn.empty()){
+        mux2.unlock();
+        return;
+    }
+    double robotX2 = robotX;
+    double robotY2 = robotY;
+    double robotAngle = robotA;
+    double robotWidth = b/100.0;
+
+    double setX = set_point.xn[0]- robotWidth/2;
+    double setY = set_point.yn[0]- robotWidth/2;
+
+    double setX2 = set_point.xn[0]+ robotWidth/2;
+    double setY2 = set_point.yn[0]+ robotWidth/2;
+
+    double ex = (setX - robotX2);
+    double ey = (setY - robotY2);
+    double eDist = sqrt(ex*ex + ey*ey);
+
+    double ex2 = (setX2 - robotX2);
+    double ey2 = (setY2 - robotY2);
+    double eDist2 = sqrt(ex2*ex2 + ey2*ey2);
+
+    double eRot = std::atan2(ey,ex) - robotAngle;
+    eRot = std::atan2(std::sin(eRot), std::cos(eRot));
+
+
+    double eRot2 = std::atan2(ey2,ex2) - robotAngle;
+    eRot2 = std::atan2(std::sin(eRot2), std::cos(eRot2));
+
+    double xp_set1=robotX2+eDist*cos(-eRot);
+    double yp_set1=robotY2+eDist*sin(-eRot);
+
+    double xp_set2=robotX2+eDist2*cos(-eRot2);
+    double yp_set2=robotY2+eDist2*sin(-eRot2);
+
+    for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
     {
-        double lidarDist=copyOfLaserData.Data[k].scanDistance/100;
+        double lidarDist=copyOfLaserData.Data[k].scanDistance/1000;
 
-        //std::cout << "Lidar dist = " << lidarDist << std::endl;
+        double xp = (robotX2 + lidarDist*cos((-(copyOfLaserData.Data[k].scanAngle)*TO_RADIANS+robotAngle)));
+        double yp = (robotY2 + lidarDist*sin((-(copyOfLaserData.Data[k].scanAngle)*TO_RADIANS+robotAngle)));
 
-        if(lidarDist > 200 || lidarDist < 5)
-            continue;
-
-        double xp = (robotX2*10 + lidarDist*cos((-(copyOfLaserData.Data[k].scanAngle))*TO_RADIANS+robotAngle));
-        double yp = (robotY2*10 - lidarDist*sin((-(copyOfLaserData.Data[k].scanAngle))*TO_RADIANS+robotAngle));
-
-        int bl = mapDialog.getBaseLength();
-
-        xp += bl;
-        yp += bl;
-        int l = mapDialog.getLength();
-
-        if(xp < 0 || xp >= l || yp < 0 || yp >= l)
-            mapDialog.resizeMapGrid(l+bl);
-        else
-            mapDialog.writeToGrid(std::round(xp),std::round(yp));
+        if(xp >= xp_set1 && xp <= xp_set2 && yp >= yp_set1 && yp <= yp_set2)
+            std::cout << "XP = " << xp << ", YP = " << yp << std::endl;
     }
     mux2.unlock();
 }
-
-
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -54,6 +73,8 @@ MainWindow::MainWindow(QWidget *parent) :
     isTest = true;
     actIndex=-1;
     useCamera1=false;
+
+    b = 30.0;
 
     ui->xn->setText("0.0");
     ui->yn->setText("0.0");
@@ -147,10 +168,52 @@ void MainWindow::paintEvent(QPaintEvent *event)
             mux2.unlock();
 
             if(!set_point.xn.empty()){
+                painter.setBrush(Qt::green);
+                pero2.setColor(Qt::green);
+                painter.setPen(pero2);
+
+                double ex = (set_point.xn[0] - robotCoord.x)*100;
+                double ey = (set_point.yn[0] - robotCoord.y)*100;
+                double eDist = sqrt(ex*ex + ey*ey);
+
+                double eRot = std::atan2(ey,ex) - robotCoord.a*TO_RADIANS;
+                eRot = std::atan2(std::sin(eRot), std::cos(eRot));
+
+                int xp=rect.width()-(rect.width()/2+eDist*sin(-eRot))+rect.topLeft().x();
+                int yp=rect.height()-(rect.height()/2+eDist*cos(-eRot))+rect.topLeft().y();
+
+                double xp2 = xp+std::sin(eRot)*1.5;
+                double yp2 = yp+std::cos(eRot)*1.5;
+
+                double xp3 = xp-std::sin(eRot)*1.5;
+                double yp3 = yp-std::cos(eRot)*1.5;
+
+                std::cout << "Xp =" << xp << ", yp =" << yp << std::endl;
+                std::cout << "Xp2 =" << xp2 << ", yp2=" << yp2 << std::endl;
+                std::cout << "Xp3 =" << xp3 << ", yp3=" << yp3 << std::endl;
+
+                painter.setBrush(Qt::cyan);
+                pero2.setColor(Qt::cyan);
+                painter.setPen(pero2);
+
+                QPointF *points = new QPointF[3];
+                points[0] = QPointF(centerX-1.5,centerY-1.5);
+                points[1] = QPointF(xp2,yp2);
+                points[1] = QPointF(xp3,yp3);
+                points[0] = QPointF(centerX+1.5,centerY+1.5);
+
+                painter.drawPolygon(points,4);
+
+            }
+
+            if(!set_point.xn.empty()){
+                painter.setBrush(Qt::magenta);
+                pero2.setColor(Qt::magenta);
+                painter.setPen(pero2);
 
                 for(int i = 0; i < set_point.xn.size(); i++){
-                    double ex = (set_point.xn[0] - robotCoord.x)*100;
-                    double ey = (set_point.yn[0] - robotCoord.y)*100;
+                    double ex = (set_point.xn[i] - robotCoord.x)*100;
+                    double ey = (set_point.yn[i] - robotCoord.y)*100;
                     double eDist = sqrt(ex*ex + ey*ey);
 
                     double eRot = std::atan2(ey,ex) - robotCoord.a*TO_RADIANS;
@@ -159,8 +222,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
                     int xp=rect.width()-(rect.width()/2+eDist*sin(-eRot))+rect.topLeft().x();
                     int yp=rect.height()-(rect.height()/2+eDist*cos(-eRot))+rect.topLeft().y();
 
-                    std::cout << "Xp = " << xp << ", Yp = " << yp << std::endl;
-                    std::cout << "RectW=" << rect.width() << ", " << "RectH=" << rect.width() << std::endl;
+                    //std::cout << "Xp = " << xp << ", Yp = " << yp << std::endl;
+                    //std::cout << "RectW=" << rect.width() << ", " << "RectH=" << rect.width() << std::endl;
 
                     painter.drawEllipse(QPoint(xp, yp),2,2);
                 }
@@ -268,17 +331,17 @@ void MainWindow::set_robot_connect_data()
 
 int MainWindow::processThisLidar(LaserMeasurement laserData)
 {
-    memcpy( &copyOfLaserData,&laserData,sizeof(LaserMeasurement));
-/*    mutex mux;
+    memcpy(&copyOfLaserData,&laserData,sizeof(LaserMeasurement));
+    mutex mux;
     mux.lock();
     robotX = robotCoord.x;
     robotY = robotCoord.y;
     robotAngle = robotCoord.a*TO_RADIANS;
     if(!isRotating){
-        f = std::bind(&MainWindow::get_laserdata_and_write_to_map,this,robotX, robotY, robotAngle);
+        f = std::bind(&MainWindow::get_obstacle_to_goal,this,robotX, robotY, robotAngle,b);
         std::async(std::launch::async, f);
     }
-    mux.unlock()*/;
+    mux.unlock();
     //tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
     // ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
     updateLaserPicture=1;
@@ -451,7 +514,6 @@ void MainWindow::on_pushButton_10_clicked()
     PathFinding pathFinding(robotCoordMap.x, robotCoordMap.y);
 
     pathFinding.exec();
-
     pathFinding.setClickCounter(0);
     pathFinding.setOldClickCounter(0);
 
@@ -470,7 +532,6 @@ void MainWindow::on_pushButton_10_clicked()
     }
 
     points.clear();
-
     std::cout << "set_point_map size=" << set_point_map.xn.size() << std::endl;
 }
 
@@ -480,14 +541,12 @@ void MainWindow::on_pushButton_11_clicked()
     if(controlType == 0){
         if(set_point.xn.empty())
             return;
-
         set_point.xn.clear();
         set_point.yn.clear();
     }
     else{
         if(set_point_map.xn.empty())
             return;
-
         set_point_map.xn.clear();
         set_point_map.yn.clear();
     }
@@ -506,7 +565,6 @@ void MainWindow::on_comboBox_2_activated(int index)
 
         if(set_point_map.xn.empty())
             return;
-
         set_point_map.xn.clear();
         set_point_map.yn.clear();
     }
@@ -516,7 +574,6 @@ void MainWindow::on_comboBox_2_activated(int index)
 
         if(set_point.xn.empty())
             return;
-
         set_point.xn.clear();
         set_point.yn.clear();
     }

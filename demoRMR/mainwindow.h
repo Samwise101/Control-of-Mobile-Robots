@@ -76,7 +76,7 @@ public:
 
     void set_robot_connect_data();
 
-    void get_laserdata_and_write_to_map(double robotX, double robotY, double robotA);
+    void get_obstacle_to_goal(double robotX, double robotY, double robotA, double b);
 
 int processThisCamera(cv::Mat cameraData);
 
@@ -123,6 +123,8 @@ private:
      double robotX;
      double robotY;
      double robotAngle;
+
+     double b;
 
      int controlType;
 

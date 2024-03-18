@@ -152,7 +152,7 @@ void PathFinding::mousePressEvent(QMouseEvent *event)
             oldClickCounter++;
         }
 
-        std::cout << "X=" << event->x() << ", Y=" << event->y() << std::endl;
+  //      std::cout << "X=" << event->x() << ", Y=" << event->y() << std::endl;
 
         QImage imageTemp = pix->toImage();
         if(map[event->x()/scale][event->y()/scale] == 0 || map[event->x()/scale][event->y()/scale] > 1){
