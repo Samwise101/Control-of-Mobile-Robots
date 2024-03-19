@@ -38,25 +38,25 @@ void Regulator::robot_movement_reg(const double& setX, const double& setY, const
         robot_motion_param.trans_speed = robot_motion_param.u_trans*eDist;
 
         if(old_speed < robot_motion_param.trans_speed){
-            robot_motion_param.trans_speed = old_speed + 2.5;
+            robot_motion_param.trans_speed = old_speed + 1.5;
         }
-        if(robot_motion_param.trans_speed > 200.0){
-            robot_motion_param.trans_speed = 200.0;
+        if(robot_motion_param.trans_speed > 250.0){
+            robot_motion_param.trans_speed = 250.0;
         }
         old_speed = robot_motion_param.trans_speed;
     }
 
     robot_motion_param.rot_speed = robot_motion_param.u_rot*eRot;
 
-        if(old_rot_speed < robot_motion_param.rot_speed){
-            robot_motion_param.rot_speed = old_rot_speed + 0.15;
-        }
-        else if(robot_motion_param.rot_speed > PI/2){
-            robot_motion_param.rot_speed = PI/2;
-        }
+    if(old_rot_speed < robot_motion_param.rot_speed){
+        robot_motion_param.rot_speed = old_rot_speed + 0.1;
+    }
+    else if(robot_motion_param.rot_speed > PI/2){
+        robot_motion_param.rot_speed = PI/2;
+    }
 
-        old_rot_speed = robot_motion_param.rot_speed;
+    old_rot_speed = robot_motion_param.rot_speed;
 
-        std::cout << "Speed = " << robot_motion_param.trans_speed << std::endl;
+    std::cout << "Speed = " << robot_motion_param.trans_speed << std::endl;
 }
 
