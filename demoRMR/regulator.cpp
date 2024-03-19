@@ -24,13 +24,14 @@ void Regulator::robot_movement_reg(const double& setX, const double& setY, const
     double eRot = std::atan2(ey,ex) - robotCoord.a*TO_RADIANS;
     eRot = std::atan2(std::sin(eRot), std::cos(eRot));
 
-    std::cout << "Dist=" << eDist << ", Rot=" << eRot << ", SetX=" << setX << ", SetY=" << setY << std::endl;
+    //std::cout << "Dist=" << eDist << ", Rot=" << eRot << ", SetX=" << setX << ", SetY=" << setY << std::endl;
 
     if(eDist < treshHold){
         robot_motion_param.rot_speed = 0.0;
         robot_motion_param.trans_speed = 0.0;
         return;
     }
+
 
     if(eRot < rot_dead_zone && eRot > -rot_dead_zone){
 
@@ -39,22 +40,23 @@ void Regulator::robot_movement_reg(const double& setX, const double& setY, const
         if(old_speed < robot_motion_param.trans_speed){
             robot_motion_param.trans_speed = old_speed + 2.5;
         }
-        else if(robot_motion_param.trans_speed > 300.0){
-            robot_motion_param.trans_speed = 300.0;
+        if(robot_motion_param.trans_speed > 200.0){
+            robot_motion_param.trans_speed = 200.0;
         }
-
         old_speed = robot_motion_param.trans_speed;
     }
 
     robot_motion_param.rot_speed = robot_motion_param.u_rot*eRot;
 
-    if(old_rot_speed < robot_motion_param.rot_speed){
-        robot_motion_param.rot_speed = old_rot_speed + 0.15;
-    }
-    else if(robot_motion_param.rot_speed > PI/2){
-        robot_motion_param.rot_speed = PI/2;
-    }
+        if(old_rot_speed < robot_motion_param.rot_speed){
+            robot_motion_param.rot_speed = old_rot_speed + 0.15;
+        }
+        else if(robot_motion_param.rot_speed > PI/2){
+            robot_motion_param.rot_speed = PI/2;
+        }
 
-    old_rot_speed = robot_motion_param.rot_speed;
+        old_rot_speed = robot_motion_param.rot_speed;
+
+        std::cout << "Speed = " << robot_motion_param.trans_speed << std::endl;
 }
 
