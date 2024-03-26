@@ -49,6 +49,11 @@ typedef struct robot_connect_data{
     std::string camera_link;
 }robot_connect_data;
 
+typedef struct SafeZone{
+    double width;
+    double length;
+}SafeZone;
+
 bool isValidIpAddress(const std::string &ipAddress);
 
 namespace Ui {
@@ -126,6 +131,7 @@ private:
 
      bool obstacle_detected;
      std::vector<QPoint> tempSetPoint;
+     SafeZone safe_zone;
 
      int controlType;
 

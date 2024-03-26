@@ -68,6 +68,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     controlType = 0;
 
+    safe_zone.length = 0.0;
+    safe_zone.width = 0.0;
+
     // disable 4. ulohy lebo pouzvam kod z nej
     ui->pushButton_10->setDisabled(true);
 }
@@ -161,7 +164,7 @@ void MainWindow::setUiValuesForMap(double setPointX, double setPointY)
 
 
 int MainWindow::processThisRobot(TKobukiData robotdata)
-{
+{   
     if(mission_started){
         if(controlType == 0 && !set_point.xn.empty()){
             robot_odometry.robot_odometry(robotdata, true, robotCoord, 1);
@@ -192,6 +195,9 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
                 if(set_point.xn.empty()){
                     mission_started = false;
                     ui->startMissionButton->setText("Start mission");
+                }
+                else{
+                    safe_zone.length = std::sqrt(std::pow(set_point.xn[set_point_map.xn.size() - 1],2) + std::pow(set_point.yn[set_point_map.yn.size() - 1],2));
                 }
             }
             else{
@@ -418,6 +424,8 @@ void MainWindow::on_pushButton_9_clicked()
         if(set_point.xn.empty() && set_point.yn.empty()){
             set_point.xn.insert(set_point.xn.begin(),ui->xn->text().toDouble());
             set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
+            safe_zone.length = std::sqrt(std::pow(set_point.xn[0],2) + std::pow(set_point.yn[0],2));
+            safe_zone.width = 0.03;
             return;
         }
         else if(set_point.xn[0] == ui->xn->text().toDouble() && set_point.yn[0] == ui->yn->text().toDouble())
