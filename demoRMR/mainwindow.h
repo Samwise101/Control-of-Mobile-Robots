@@ -124,6 +124,9 @@ private:
      double robotY;
      double robotAngle;
 
+     bool obstacle_detected;
+     std::vector<QPoint> tempSetPoint;
+
      int controlType;
 
      std::function<void()> f;

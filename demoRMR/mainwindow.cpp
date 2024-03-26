@@ -5,38 +5,31 @@
 #include <regex>
 #include <thread>
 #include <chrono>
+#include <cmath>
 
 
 void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, double robotA)
 {
     //std::cout << "X=" << robotX << ", Y=" << robotY << ", A=" << robotA << std::endl;
     double robotX2 = robotX;
-    double robotY2 = -robotY;
+    double robotY2 = robotY;
     double robotAngle = robotA;
 
+    double xp{-1};
+    double yp{-1};
+
     mux2.lock();
-    for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k+=2)
+    for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
     {
-        double lidarDist=copyOfLaserData.Data[k].scanDistance/100;
+        double lidarDist=copyOfLaserData.Data[k].scanDistance/1000.0;
+        double lidarScanAngle = (-(copyOfLaserData.Data[k].scanAngle))*TO_RADIANS;
 
         //std::cout << "Lidar dist = " << lidarDist << std::endl;
 
-        if(lidarDist > 200 || lidarDist < 5)
-            continue;
-
-        double xp = (robotX2*10 + lidarDist*cos((-(copyOfLaserData.Data[k].scanAngle))*TO_RADIANS+robotAngle));
-        double yp = (robotY2*10 - lidarDist*sin((-(copyOfLaserData.Data[k].scanAngle))*TO_RADIANS+robotAngle));
-
-        int bl = mapDialog.getBaseLength();
-
-        xp += bl;
-        yp += bl;
-        int l = mapDialog.getLength();
-
-        if(xp < 0 || xp >= l || yp < 0 || yp >= l)
-            mapDialog.resizeMapGrid(l+bl);
-        else
-            mapDialog.writeToGrid(std::round(xp),std::round(yp));
+        if(((lidarScanAngle >= 0 && lidarScanAngle < PI/4) || (lidarScanAngle >= 7*PI/4 && lidarScanAngle < 2*PI)) && lidarDist <= 3.0 && !obstacle_detected){
+            xp = (robotX2 + lidarDist*cos((lidarScanAngle)+robotAngle));
+            yp = (robotY2 + lidarDist*sin((lidarScanAngle)+robotAngle));
+        }
     }
     mux2.unlock();
 }
@@ -71,8 +64,12 @@ MainWindow::MainWindow(QWidget *parent) :
     datacounter = 0;
     canStart = false;
     isRotating = false;
+    obstacle_detected = false;
 
     controlType = 0;
+
+    // disable 4. ulohy lebo pouzvam kod z nej
+    ui->pushButton_10->setDisabled(true);
 }
 
 MainWindow::~MainWindow()
@@ -175,10 +172,18 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
             robot_motion_reg.robot_movement_reg(set_point_map.xn[set_point_map.xn.size() - 1], set_point_map.yn[set_point_map.yn.size() - 1], robotCoordMap, robot_motion_param,-1);
         }
 
-        forwardspeed = robot_motion_param.trans_speed;
-        rotationspeed = robot_motion_param.rot_speed;
-
         mutex mux;
+        mux.lock();
+        if(obstacle_detected && tempSetPoint.empty()){
+            obstacle_detected = false;
+            std::cout << "Set detected obstacle flag to: " << obstacle_detected << std::endl;
+        }
+        else{
+            forwardspeed = robot_motion_param.trans_speed;
+            rotationspeed = robot_motion_param.rot_speed;
+        }
+        mux.unlock();
+
         if(forwardspeed == 0.0 && rotationspeed == 0.0)
         {
             if(controlType == 0){
@@ -249,7 +254,7 @@ void MainWindow::set_robot_connect_data()
 int MainWindow::processThisLidar(LaserMeasurement laserData)
 {
     memcpy( &copyOfLaserData,&laserData,sizeof(LaserMeasurement));
-/*    mutex mux;
+    mutex mux;
     mux.lock();
     robotX = robotCoord.x;
     robotY = robotCoord.y;
@@ -258,12 +263,11 @@ int MainWindow::processThisLidar(LaserMeasurement laserData)
         f = std::bind(&MainWindow::get_laserdata_and_write_to_map,this,robotX, robotY, robotAngle);
         std::async(std::launch::async, f);
     }
-    mux.unlock()*/;
+    mux.unlock();
     //tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
     // ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
     updateLaserPicture=1;
     update();//tento prikaz prinuti prekreslit obrazovku.. zavola sa paintEvent funkcia
-
 
     return 0;
 }
