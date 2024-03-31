@@ -6,11 +6,11 @@
 #include <thread>
 #include <chrono>
 #include <cmath>
+#include <utility>
 
-#define PI          3.14159 /* pi */
+#define PI  3.14159 /* pi */
 
-
-void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, double robotA)
+void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, double robotA, double setX, double setY)
 {
     //std::cout << "X=" << robotX << ", Y=" << robotY << ", A=" << robotA << std::endl;
     double robotX2 = robotX;
@@ -19,19 +19,101 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
 
     double xp{-1};
     double yp{-1};
+    double eDist{-1};
+    double trashold{1500};
+    double lastLidarRead{-1};
+
+    bool leftFound{false};
+    bool rightFound{false};
+
+    std::array<Point,2> tempPoints{};
+
+    if(set_point.xn.empty())
+        return;
 
     mux2.lock();
     for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
     {
-        double lidarDist=copyOfLaserData.Data[k].scanDistance/1000.0;
-        double lidarScanAngle = (360-(copyOfLaserData.Data[k].scanAngle))*TO_RADIANS; // pravotocivy prepocet
+        double lidarDist = copyOfLaserData.Data[k].scanDistance;
+
+        if((lidarDist > 6.1 && lidarDist < 7.1) || lidarDist < 1.5)
+            continue;
+
+        double lidarScanAngle = (360-copyOfLaserData.Data[k].scanAngle)*TO_RADIANS; // pravotocivy prepocet
 
         //std::cout << "Lidar dist = " << lidarDist << std::endl;
 
-        double d_crit = 0.15/std::sin(lidarScanAngle);
+        if(set_point.xn.empty())
+            return;
 
-        xp = (robotX2 + lidarDist*cos((lidarScanAngle)+robotAngle));
-        yp = (robotY2 + lidarDist*sin((lidarScanAngle)+robotAngle));
+        double ex = (set_point.xn[set_point.xn.size()-1] - robotCoord.x)*1000.0;
+        double ey = (set_point.yn[set_point.yn.size()-1] - robotCoord.y)*1000.0;
+        eDist = sqrt(ex*ex + ey*ey);
+
+        int sign{1};
+        if(lidarScanAngle >= PI && lidarScanAngle < 2*PI)
+            sign = -1;
+
+        double d_crit = (sign*150)/std::sin(lidarScanAngle-robotAngle*TO_RADIANS);
+
+        if(robotStop && !obstacle_detected){
+            // nasli sme lavu stranu
+            if(!leftFound && lastLidarRead != -1 && lastLidarRead > trashold && lidarDist <= trashold){
+                xp = (robotX2 + (lidarDist/1000.0)*sin((lidarScanAngle)+robotAngle));
+                yp = (robotY2 + (lidarDist/1000.0)*cos((lidarScanAngle)+robotAngle));
+                tempPoints[0] = Point{xp, yp};
+                leftFound = true;
+            }
+            // nasli sme pravu stranu
+            if(!rightFound && lastLidarRead != -1 && lastLidarRead <= trashold && lidarDist > trashold){
+                xp = (robotX2 + (lastLidarRead/1000.0)*sin((lidarScanAngle)+robotAngle));
+                yp = (robotY2 + (lastLidarRead/1000.0)*cos((lidarScanAngle)+robotAngle));
+                tempPoints[1] = Point{xp, yp};
+                rightFound = true;
+            }
+
+            if(leftFound && rightFound){
+                double lengthLeft{0};
+                double lengthRight{0};
+
+                for(int i = 0; i < 2; i++){
+                    double eDist{};
+
+                    double ex = (tempPoints[i].x - robotCoord.x)*1000.0;
+                    double ey = (tempPoints[i].y - robotCoord.y)*1000.0;
+
+                    eDist += sqrt(ex*ex + ey*ey);
+
+                    ex = (setX - tempPoints[i].x)*1000.0;
+                    ey = (setY - tempPoints[i].y)*1000.0;
+                    eDist += sqrt(ex*ex + ey*ey);
+
+                    if(i == 0)
+                        lengthLeft += eDist;
+                    else
+                        lengthRight += eDist;
+                }
+
+                if(lengthRight >= lengthLeft){
+                    set_point.xn.push_back(tempPoints[0].x);
+                    set_point.yn.push_back(tempPoints[0].y);
+                    std::cout << "Set point lavy: [" << tempPoints[0].x << ", " << tempPoints[0].y << "]" << std::endl;
+                }
+                else{
+                    set_point.xn.push_back(tempPoints[1].x);
+                    set_point.yn.push_back(tempPoints[1].y);
+                    std::cout << "Set point pravy: [" << tempPoints[0].x << ", " << tempPoints[0].y << "]" << std::endl;
+                }
+                leftFound = false;
+                rightFound = false;
+                obstacle_detected = true;
+            }
+        }
+        else if(!obstacle_detected && eDist != -1 && lidarDist < eDist && lidarDist <= d_crit &&
+          (lidarScanAngle <= PI/2 || lidarScanAngle >= 3*PI/2) && lidarDist < trashold){
+            robotStop = true;
+        }
+        lastLidarRead = lidarDist;
     }
     mux2.unlock();
 }
@@ -65,6 +147,7 @@ MainWindow::MainWindow(QWidget *parent) :
     datacounter = 0;
     canStart = false;
     isRotating = false;
+    robotStop = false;
     obstacle_detected = false;
 
     controlType = 0;
@@ -134,26 +217,16 @@ void MainWindow::paintEvent(QPaintEvent *event)
             }
 
             updateLaserPicture=0;
-            double alpha_max{-1};
-            double temp{-1};
 
-
-            if(!set_point.xn.empty()){
-                double ex = (set_point.xn[set_point.xn.size()-1] - robotCoord.x)*1000.0;
-                double ey = (set_point.yn[set_point.yn.size()-1] - robotCoord.y)*1000.0;
-                double eDist = sqrt(ex*ex + ey*ey);
-
-//                temp = std::atan2(ey,ex);
-//                temp = std::atan2(std::sin(temp), std::cos(temp));
-
-//                alpha_max = std::atan((150/eDist)) - robotAngle*TO_RADIANS;
-//                alpha_max = std::atan2(std::sin(alpha_max), std::cos(alpha_max));
-            }
             mux2.lock();
             for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
             {
-                int lidarDist=copyOfLaserData.Data[k].scanDistance/20;
-                double lidarAngle = (copyOfLaserData.Data[k].scanAngle)*TO_RADIANS;
+                double lidarDist = copyOfLaserData.Data[k].scanDistance/20;
+
+                if((lidarDist > 6.1 && lidarDist < 7.1) || lidarDist < 1.5)
+                    continue;
+
+                double lidarAngle = (360-copyOfLaserData.Data[k].scanAngle)*TO_RADIANS;
 
                 pero2.setStyle(Qt::SolidLine);
                 pero2.setWidth(3);
@@ -167,7 +240,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 int sign{1};
                 if(lidarAngle >= PI && lidarAngle < 2*PI)
                     sign = -1;
-                double d_crit = (((centerX/100+300)/20)/std::sin(sign*lidarAngle-robotAngle*TO_RADIANS));
+                double d_crit = (((centerX/100+sign*150)/20)/std::sin(lidarAngle-robotAngle*TO_RADIANS));
 
                 if(rect.contains(xp,yp)){
                     if(lidarDist <= d_crit && (lidarAngle <= PI/2 || lidarAngle >= 3*PI/2))
@@ -214,14 +287,10 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 
         mutex mux;
         mux.lock();
-        if(obstacle_detected && tempSetPoint.empty()){
-            obstacle_detected = false;
-            std::cout << "Set detected obstacle flag to: " << obstacle_detected << std::endl;
-        }
-        else{
-            forwardspeed = robot_motion_param.trans_speed;
-            rotationspeed = robot_motion_param.rot_speed;
-        }
+
+        forwardspeed = robot_motion_param.trans_speed;
+        rotationspeed = robot_motion_param.rot_speed;
+
         mux.unlock();
 
         if(forwardspeed == 0.0 && rotationspeed == 0.0)
@@ -229,6 +298,11 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
             if(controlType == 0){
                 set_point.xn.pop_back();
                 set_point.yn.pop_back();
+                mux.lock();
+                if(obstacle_detected){
+                    obstacle_detected = false;
+                }
+                mux.unlock();
                 if(set_point.xn.empty()){
                     mission_started = false;
                     ui->startMissionButton->setText("Start mission");
@@ -266,8 +340,13 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
             mux.unlock();
             robot.setArcSpeed(forwardspeed, forwardspeed/rotationspeed);
         }
-        else if(forwardspeed != 0.0 && rotationspeed == 0.0)
+        else if(forwardspeed != 0.0 && rotationspeed == 0.0){
             robot.setArcSpeed(forwardspeed, 0);
+        }
+        else if(forwardspeed == 0.0 && rotationspeed == 0.0){
+            forwardspeed = 0;
+            robot.setArcSpeed(forwardspeed, 0);
+        }
     }
     else{
         forwardspeed = 0;
@@ -303,8 +382,8 @@ int MainWindow::processThisLidar(LaserMeasurement laserData)
     robotX = robotCoord.x;
     robotY = robotCoord.y;
     robotAngle = robotCoord.a*TO_RADIANS;
-    if(!isRotating && mission_started){
-        f = std::bind(&MainWindow::get_laserdata_and_write_to_map,this,robotX, robotY, robotAngle);
+    if(!isRotating && mission_started && !set_point.xn.empty()){
+        f = std::bind(&MainWindow::get_laserdata_and_write_to_map,this,robotX, robotY, robotAngle, set_point.xn[set_point.xn.size()-1],set_point.xn[set_point.xn.size()-1]);
         std::async(std::launch::async, f);
     }
     //tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.

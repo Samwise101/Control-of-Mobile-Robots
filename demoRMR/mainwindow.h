@@ -54,6 +54,11 @@ typedef struct SafeZone{
     double length;
 }SafeZone;
 
+typedef struct Point{
+    double x;
+    double y;
+}Point;
+
 bool isValidIpAddress(const std::string &ipAddress);
 
 namespace Ui {
@@ -81,7 +86,7 @@ public:
 
     void set_robot_connect_data();
 
-    void get_laserdata_and_write_to_map(double robotX, double robotY, double robotA);
+    void get_laserdata_and_write_to_map(double robotX, double robotY, double robotA, double setX, double setY);
 
 int processThisCamera(cv::Mat cameraData);
 
@@ -129,6 +134,7 @@ private:
      double robotY;
      double robotAngle;
 
+
      bool obstacle_detected;
      std::vector<QPoint> tempSetPoint;
      SafeZone safe_zone;
@@ -138,6 +144,7 @@ private:
      std::function<void()> f;
 
      bool isRotating;
+     bool robotStop;
 
      std::atomic_bool isStoped;
      std::atomic_bool canStart;
