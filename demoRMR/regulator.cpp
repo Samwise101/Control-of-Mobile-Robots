@@ -18,7 +18,6 @@ void Regulator::robot_movement_reg(const double& setX, const double& setY, const
     double ey = sign*(setY - robotCoord.y)*1000.0;
     double eDist = sqrt(ex*ex + ey*ey);
 
-
     treshHold = treshHold*1000.0;
 
     double eRot = std::atan2(ey,ex) - robotCoord.a*TO_RADIANS;

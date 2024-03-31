@@ -7,6 +7,8 @@
 #include <chrono>
 #include <cmath>
 
+#define PI          3.14159 /* pi */
+
 
 void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, double robotA)
 {
@@ -22,18 +24,17 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
     for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
     {
         double lidarDist=copyOfLaserData.Data[k].scanDistance/1000.0;
-        double lidarScanAngle = (-(copyOfLaserData.Data[k].scanAngle))*TO_RADIANS;
+        double lidarScanAngle = (360-(copyOfLaserData.Data[k].scanAngle))*TO_RADIANS; // pravotocivy prepocet
 
         //std::cout << "Lidar dist = " << lidarDist << std::endl;
 
-        if(((lidarScanAngle >= 0 && lidarScanAngle < PI/4) || (lidarScanAngle >= 7*PI/4 && lidarScanAngle < 2*PI)) && lidarDist <= 3.0 && !obstacle_detected){
-            xp = (robotX2 + lidarDist*cos((lidarScanAngle)+robotAngle));
-            yp = (robotY2 + lidarDist*sin((lidarScanAngle)+robotAngle));
-        }
+        double d_crit = 0.15/std::sin(lidarScanAngle);
+
+        xp = (robotX2 + lidarDist*cos((lidarScanAngle)+robotAngle));
+        yp = (robotY2 + lidarDist*sin((lidarScanAngle)+robotAngle));
     }
     mux2.unlock();
 }
-
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -133,16 +134,52 @@ void MainWindow::paintEvent(QPaintEvent *event)
             }
 
             updateLaserPicture=0;
+            double alpha_max{-1};
+            double temp{-1};
 
+
+            if(!set_point.xn.empty()){
+                double ex = (set_point.xn[set_point.xn.size()-1] - robotCoord.x)*1000.0;
+                double ey = (set_point.yn[set_point.yn.size()-1] - robotCoord.y)*1000.0;
+                double eDist = sqrt(ex*ex + ey*ey);
+
+//                temp = std::atan2(ey,ex);
+//                temp = std::atan2(std::sin(temp), std::cos(temp));
+
+//                alpha_max = std::atan((150/eDist)) - robotAngle*TO_RADIANS;
+//                alpha_max = std::atan2(std::sin(alpha_max), std::cos(alpha_max));
+            }
             mux2.lock();
             for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
             {
                 int lidarDist=copyOfLaserData.Data[k].scanDistance/20;
-                int xp=rect.width()-(rect.width()/2+lidarDist*2*sin((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().x();
-                int yp=rect.height()-(rect.height()/2+lidarDist*2*cos((360.0+copyOfLaserData.Data[k].scanAngle)*TO_RADIANS))+rect.topLeft().y();
+                double lidarAngle = (copyOfLaserData.Data[k].scanAngle)*TO_RADIANS;
 
-                if(rect.contains(xp,yp))
-                    painter.drawEllipse(QPoint(xp, yp),2,2);
+                pero2.setStyle(Qt::SolidLine);
+                pero2.setWidth(3);
+                pero2.setColor(Qt::yellow);
+                painter.setBrush(Qt::yellow);
+                painter.setPen(pero2);
+
+                int xp=rect.width()-(rect.width()/2+lidarDist*2*sin(lidarAngle))+rect.topLeft().x();
+                int yp=rect.height()-(rect.height()/2+lidarDist*2*cos(lidarAngle))+rect.topLeft().y();
+
+                int sign{1};
+                if(lidarAngle >= PI && lidarAngle < 2*PI)
+                    sign = -1;
+                double d_crit = (((centerX/100+300)/20)/std::sin(sign*lidarAngle-robotAngle*TO_RADIANS));
+
+                if(rect.contains(xp,yp)){
+                    if(lidarDist <= d_crit && (lidarAngle <= PI/2 || lidarAngle >= 3*PI/2))
+                    {
+                        pero2.setStyle(Qt::SolidLine);
+                        pero2.setWidth(3);
+                        pero2.setColor(Qt::red);
+                        painter.setBrush(Qt::red);
+                        painter.setPen(pero2);
+                    }
+                    painter.drawEllipse(QPoint(xp, yp),1,1);
+                }
             }
             mux2.unlock();
         }
@@ -195,9 +232,12 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
                 if(set_point.xn.empty()){
                     mission_started = false;
                     ui->startMissionButton->setText("Start mission");
+                    safe_zone.length = 0.0;
+                    safe_zone.width = 0.0;
                 }
                 else{
                     safe_zone.length = std::sqrt(std::pow(set_point.xn[set_point_map.xn.size() - 1],2) + std::pow(set_point.yn[set_point_map.yn.size() - 1],2));
+                    safe_zone.width = 0.03;
                 }
             }
             else{
@@ -260,16 +300,13 @@ void MainWindow::set_robot_connect_data()
 int MainWindow::processThisLidar(LaserMeasurement laserData)
 {
     memcpy( &copyOfLaserData,&laserData,sizeof(LaserMeasurement));
-    mutex mux;
-    mux.lock();
     robotX = robotCoord.x;
     robotY = robotCoord.y;
     robotAngle = robotCoord.a*TO_RADIANS;
-    if(!isRotating){
+    if(!isRotating && mission_started){
         f = std::bind(&MainWindow::get_laserdata_and_write_to_map,this,robotX, robotY, robotAngle);
         std::async(std::launch::async, f);
     }
-    mux.unlock();
     //tu mozete robit s datami z lidaru.. napriklad najst prekazky, zapisat do mapy. naplanovat ako sa prekazke vyhnut.
     // ale nic vypoctovo narocne - to iste vlakno ktore cita data z lidaru
     updateLaserPicture=1;
