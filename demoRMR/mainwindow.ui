@@ -14,7 +14,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QGridLayout" name="gridLayout">
+   <layout class="QGridLayout" name="gridLayout" rowstretch="0,1,0" columnstretch="1,0">
     <item row="2" column="0">
      <widget class="QFrame" name="frame">
       <property name="sizePolicy">
