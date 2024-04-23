@@ -3,6 +3,7 @@
 
 #include "odometry.h"
 #include <iostream>
+#include <QColor>
 
 typedef struct robot_motion{
     double rot_speed;
