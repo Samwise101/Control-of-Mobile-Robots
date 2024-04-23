@@ -84,7 +84,9 @@ public:
 
     void get_laserdata_and_write_to_map(double robotX, double robotY, double robotA, double setX, double setY);
 
-int processThisCamera(cv::Mat cameraData);
+    bool checkAccessibility(double xp, double yp);
+
+    int processThisCamera(cv::Mat cameraData);
 
 private slots:
     void on_startButton_clicked();
