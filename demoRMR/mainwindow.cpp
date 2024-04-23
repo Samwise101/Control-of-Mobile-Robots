@@ -15,6 +15,10 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
     if(set_point.xn.empty())
         return;
 
+    if(robotStop){
+        return;
+    }
+
     double angle_trashhold{PI/6};
     double distance_trashhold{1500};
 
@@ -134,9 +138,6 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
     if(!obstacle_detected){
         return;
     }
-    if(robotStop){
-        return;
-    }
 
     leftAngleCheck = eRot + PI/2 + robotA;
     rightAngleCheck = eRot - PI/2 + robotA;
@@ -224,7 +225,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         if(rightDist == -1){
             // checking left
             std::cout << "Checking left" << std::endl;
-            angle_offset = (std::atan2(offset,oldLidarDistLeft))+robotA;
+            angle_offset = (std::atan2(offset,oldLidarDistLeft));
             xp = oldLidarDistLeft*std::cos(oldlidarAngleLeft + angle_offset);
             yp = oldLidarDistLeft*std::sin(oldlidarAngleLeft + angle_offset );
             if(checkAccessibility(xp,yp)){
@@ -234,7 +235,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         else{
             // checking right
             std::cout << "Checking right" << std::endl;
-            angle_offset = (std::atan2(offset,oldLidarDistRight))+robotA;
+            angle_offset = (std::atan2(offset,oldLidarDistRight));
             xp = oldLidarDistRight*std::cos(oldlidarAngleRight - angle_offset);
             yp = oldLidarDistRight*std::sin(oldlidarAngleRight - angle_offset);
             if(!checkAccessibility(xp,yp)){
@@ -255,7 +256,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         if(leftDist == -1){
             // checking right
             std::cout << "Checking right" << std::endl;
-            angle_offset = (std::atan2(offset,oldLidarDistRight))+robotA;
+            angle_offset = (std::atan2(offset,oldLidarDistRight));
             xp = oldLidarDistRight*std::cos(oldlidarAngleRight + angle_offset);
             yp = oldLidarDistRight*std::sin(oldlidarAngleRight + angle_offset);
             if(checkAccessibility(xp,yp)){
@@ -265,7 +266,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         else{
             // checking left
             std::cout << "Checking left" << std::endl;
-            angle_offset = (std::atan2(offset,oldLidarDistLeft))+robotA;
+            angle_offset = (std::atan2(offset,oldLidarDistLeft));
             xp = oldLidarDistLeft*std::cos(oldlidarAngleLeft - angle_offset);
             yp = oldLidarDistLeft*std::sin(oldlidarAngleLeft - angle_offset);
             if(!checkAccessibility(xp,yp)){
@@ -292,6 +293,8 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
     else{
         robotStop = true;
     }
+
+    robotStop = true;
 
     std::cout << "\n";
     m.unlock();
