@@ -286,8 +286,8 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
     std::cout << "xp = " << xp << ", yp = " << yp << ", angle = " << angle_offset << std::endl;
 
     if(leftFound || rightFound){
-        set_point.xn.push_back(xp);
-        set_point.yn.push_back(yp);
+        tempSetPoint.x = xp;
+        tempSetPoint.y = yp;
     }
 
     robotStop = true;
@@ -339,6 +339,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->yn->setText("0.0");
 
     mission_started = false;
+
+    tempSetPoint.x = -1.0;
+    tempSetPoint.y = -1.0;
 
     robotCoord.a = 0.0;
     robotCoord.x = 0.0;
@@ -468,6 +471,26 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
                     painter.drawEllipse(QPoint(xp, yp),2,2);
                 }
+            }
+
+            if(tempSetPoint.x != -1){
+                pero2.setStyle(Qt::SolidLine);
+                pero2.setWidth(3);
+                pero2.setColor(Qt::cyan);
+                painter.setBrush(Qt::cyan);
+                painter.setPen(pero2);
+
+                double ex = (tempSetPoint.x - robotCoord.x)*1000;
+                double ey = (tempSetPoint.y - robotCoord.y)*1000;
+                double eDist = sqrt(ex*ex + ey*ey)/20;
+
+                double eRot = std::atan2(ey,ex);
+                eRot = std::atan2(std::sin(eRot), std::cos(eRot));
+
+                int xp=rect.width()-(rect.width()/2+eDist*2*sin(eRot))+rect.topLeft().x();
+                int yp=rect.height()-(rect.height()/2+eDist*2*cos(eRot))+rect.topLeft().y();
+
+                painter.drawEllipse(QPoint(xp, yp),2,2);
             }
         }
     }

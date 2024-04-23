@@ -132,6 +132,7 @@ private:
      double robotY;
      double robotAngle;
 
+     Point tempSetPoint;
 
      bool obstacle_detected;
 
