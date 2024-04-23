@@ -289,8 +289,11 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         tempSetPoint.x = xp;
         tempSetPoint.y = yp;
     }
+    else{
+        robotStop = true;
+    }
 
-    robotStop = true;
+    std::cout << "\n";
     m.unlock();
 }
 
@@ -463,7 +466,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
                     double ey = (set_point.yn[i] - robotCoord.y)*1000;
                     double eDist = sqrt(ex*ex + ey*ey)/20;
 
-                    double eRot = std::atan2(ey,ex);
+                    double eRot = std::atan2(ey,ex) - robotCoord.a*TO_RADIANS;
                     eRot = std::atan2(std::sin(eRot), std::cos(eRot));
 
                     int xp=rect.width()-(rect.width()/2+eDist*2*sin(eRot))+rect.topLeft().x();
@@ -484,7 +487,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 double ey = (tempSetPoint.y - robotCoord.y)*1000;
                 double eDist = sqrt(ex*ex + ey*ey)/20;
 
-                double eRot = std::atan2(ey,ex);
+                double eRot = std::atan2(ey,ex) - robotCoord.a*TO_RADIANS;
                 eRot = std::atan2(std::sin(eRot), std::cos(eRot));
 
                 int xp=rect.width()-(rect.width()/2+eDist*2*sin(eRot))+rect.topLeft().x();
@@ -513,7 +516,11 @@ void MainWindow::setUiValuesForMap(double setPointX, double setPointY)
 int MainWindow::processThisRobot(TKobukiData robotdata)
 {
     if(mission_started){
-        if(controlType == 0 && !set_point.xn.empty()){
+        if(tempSetPoint.x != -1 && tempSetPoint.y != -1){
+            robot_odometry.robot_odometry(robotdata, true, robotCoord, 1);
+            robot_motion_reg.robot_movement_reg(tempSetPoint.x, tempSetPoint.y, robotCoord, robot_motion_param,1);
+        }
+        else if(controlType == 0 && !set_point.xn.empty()){
             robot_odometry.robot_odometry(robotdata, true, robotCoord, 1);
             robot_motion_reg.robot_movement_reg(set_point.xn[set_point.xn.size() - 1], set_point.yn[set_point.yn.size() - 1], robotCoord, robot_motion_param,1);
         }
@@ -523,17 +530,8 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
         }
 
         mutex mux;
-        mux.lock();
-
-        if(obstacle_detected){
-            forwardspeed = 0;
-            rotationspeed = 0;
-        }
-        else{
-            forwardspeed = robot_motion_param.trans_speed;
-            rotationspeed = robot_motion_param.rot_speed;
-        }
-        mux.unlock();
+        forwardspeed = robot_motion_param.trans_speed;
+        rotationspeed = robot_motion_param.rot_speed;
 
         if(forwardspeed == 0.0 && rotationspeed != 0.0){
             mux.lock();
