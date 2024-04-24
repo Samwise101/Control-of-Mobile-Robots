@@ -86,6 +86,7 @@ public:
 
     bool checkAccessibility(double xp, double yp);
 
+
     int processThisCamera(cv::Mat cameraData);
 
 private slots:
@@ -132,7 +133,7 @@ private:
      double robotY;
      double robotAngle;
 
-     Point tempSetPoint;
+     SetPoint tempSetPoint;
 
      bool obstacle_detected;
 
