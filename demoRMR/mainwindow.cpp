@@ -136,7 +136,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
             if(lidarAngle < rightThreshold)
                 break;
 
-            if(std::abs(lidarDist - oldLidarDist) > 0.5){
+            if(std::abs(lidarDist - oldLidarDist) > 0.5 && lidarDist < 3.0){
                 rightCornerFound = true;
                 break;
             }
@@ -176,7 +176,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
             if(lidarAngle > leftThreshold)
                 break;
 
-            if(std::abs(lidarDist - oldLidarDist) > 0.5){
+            if(std::abs(lidarDist - oldLidarDist) > 0.5 && lidarDist < 3.0){
                 leftCornerFound = true;
                 break;
             }
