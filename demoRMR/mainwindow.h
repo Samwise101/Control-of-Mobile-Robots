@@ -154,6 +154,8 @@ private:
      Point zone_corner_left;
      Point zone_corner_right;
      Point obstacleCoord;
+     Point obstacleCornerLeft;
+     Point obstacleCornerRight;
 
      std::mutex mux;
      std::mutex mux2;
