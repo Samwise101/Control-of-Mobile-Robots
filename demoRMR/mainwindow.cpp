@@ -12,305 +12,80 @@
 
 void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, double robotA, double setX, double setY)
 {
-    if(!tempSetPoint.xn.empty())
-        return;
+    double robotXCoord{robotX};
+    double robotYCoord{robotY};
+    double robotAngle{robotA};
+    double setPointX{setX};
+    double setPointY{setY};
 
-    if(obstacle_detected){
-        robotStop = true;
-        return;
+    double ex = robotXCoord - setPointX;
+    double ey = robotYCoord - setPointY;
+    double eDist = std::sqrt(ex*ex + ey*ey);
+    double eRot = std::atan2(ey,ex) - PI;
+    eRot  = 2*PI - eRot;
+    if(eRot < 0){
+        eRot = 2*PI + eRot;
+    }
+    if(eRot >= 2*PI){
+        eRot -= 2*PI;
     }
 
-    double distance_trashhold{1.5};
+    std::cout << "eRot = " << eRot << ", eDist = " << eDist << std::endl;
+    double angleLimit = std::atan2(0.25, eDist);
+    double leftThreshold = 2*PI - eRot - angleLimit;
+    double rightThreshold = 2*PI - eRot + angleLimit;
 
-    int obstacle_index{-1};
-    double obstacle_distance{-1};
-    double obstacle_angle{-1};
-
-    double ex = (setX - robotX);
-    double ey = (setY - robotY);
-    double eDist = std::sqrt(ex*ex+ey*ey);
-    double eRot = std::atan2(ey,ex);
-    eRot = 2*PI + eRot - robotA;
-    if(eRot > 2*PI){
-        eRot = eRot - 2*PI;
+    if(leftThreshold < 0){
+        leftThreshold = 2*PI + leftThreshold;
     }
-
-    double angle_trashhold = std::atan2(0.30, eDist);
-
-    double leftAngleCheck = eRot + angle_trashhold;
-    double rightAngleCheck = eRot - angle_trashhold;
-
-    bool leftFound{false};
-    bool rightFound{false};
-    double leftDist{-1};
-    double rightDist{-1};
-
-    double oldLidarDistRight{-1};
-    double oldlidarAngleRight{};
-
-    double oldLidarDistLeft{-1};
-    double oldlidarAngleLeft{};
-
-    double xp{};
-    double xp2{};
-    double yp{};
-    double yp2{};
-    int i{};
+    else if(leftThreshold >= 2*PI){
+        leftThreshold -= 2*PI;
+    }
+    if(rightThreshold < 0){
+        rightThreshold = 2*PI + rightThreshold;
+    }
+    else if(rightThreshold >= 2*PI){
+        rightThreshold -= 2*PI;
+    }
 
     mutex m;
     m.lock();
 
-    if(leftAngleCheck < 0){
-        leftAngleCheck = 2*PI + (eRot + angle_trashhold);
-    }
-    else if(leftAngleCheck >= 2*PI){
-        leftAngleCheck = (eRot + angle_trashhold) - 2*PI;
-    }
+    zone_corner_left.x = eDist*std::cos(leftThreshold);
+    zone_corner_left.y = eDist*std::sin(leftThreshold);
+    zone_corner_right.x = eDist*std::cos(rightThreshold);
+    zone_corner_right.y = eDist*std::sin(rightThreshold);
 
-    if(rightAngleCheck < 0){
-        rightAngleCheck = 2*PI + (eRot - angle_trashhold);
-    }
-    else if(rightAngleCheck >= 2*PI){
-        rightAngleCheck = (eRot - angle_trashhold) - 2*PI;
-    }
+    std::cout << "angleLimit = " << angleLimit << ", leftThreshold angle = "<< leftThreshold << ", rightThreshold angle =" << rightThreshold<< std::endl;
 
-    int counter{};
-
-    for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
-    {
-        double lidarDist = copyOfLaserData.Data[k].scanDistance/1000.0;
-        double lidarAngle = (360-copyOfLaserData.Data[k].scanAngle)*TO_RADIANS;
-
-        double d_crit{-1};
-
-        if(leftAngleCheck <= PI/2 && rightAngleCheck >= 3*PI/2){
-            if((lidarAngle >= 0 && lidarAngle <= leftAngleCheck) || (lidarAngle <= 2*PI  && lidarAngle >= rightAngleCheck)){
-                if(lidarAngle == 0.0){
-                    lidarAngle = 0.0001;
-                }
-                else if(lidarAngle > PI/2){
-                    if(lidarAngle >= 3*PI/2 && lidarAngle <= 2*PI){
-                        lidarAngle -= 3*PI/2;
-                    }
-                    else if(lidarAngle >= PI && lidarAngle < 3*PI/2){
-                        lidarAngle -= PI;
-                    }
-                    else if(lidarAngle >= PI/2 && lidarAngle < PI){
-                        lidarAngle -= PI/2;
-                    }
-                }
-                d_crit = 0.15/std::abs(std::sin(lidarAngle-robotA));
-            }
-        }
-        else{
-            if((lidarAngle <= leftAngleCheck && lidarAngle >= rightAngleCheck)){
-                if(lidarAngle == 0.0){
-                    lidarAngle = 0.0001;
-                }
-                else if(lidarAngle > PI/2){
-                    if(lidarAngle >= 3*PI/2 && lidarAngle <= 2*PI){
-                        lidarAngle -= 3*PI/2;
-                    }
-                    else if(lidarAngle >= PI && lidarAngle < 3*PI/2){
-                        lidarAngle -= PI;
-                    }
-                    else if(lidarAngle >= PI/2 && lidarAngle < PI){
-                        lidarAngle -= PI/2;
-                    }
-                }
-                d_crit = 0.15/std::abs(std::sin(lidarAngle-robotA));
-            }
-        }
-
-        if(lidarDist <= d_crit && d_crit != -1)
-        {
-            if(lidarDist < distance_trashhold && eDist >= lidarDist && !obstacle_detected){
-                obstacle_detected = true;
-                obstacle_index = k;
-                obstacle_distance = lidarDist;
-                oldLidarDistLeft = obstacle_distance;
-                obstacle_angle = lidarAngle;
-                oldlidarAngleLeft = obstacle_angle;
-                oldLidarDistRight = oldLidarDistLeft;
-                oldlidarAngleRight = oldlidarAngleLeft;
-                std::cout << "Obstacle detected, at index " << obstacle_index << " , stopping the robot!" << std::endl;
-                std::cout << "Obstacle angle = " << lidarAngle << std::endl;
-                break;
-            }
-        }
-    }
     m.unlock();
 
-    if(!obstacle_detected){
-        return;
-    }
-
+    bool obstacleFound{false};
 
     m.lock();
-    for(int k=obstacle_index; counter<90; k--){
-        if(k < 0) {
-            i = copyOfLaserData.numberOfScans + k;
-        }
-        else{
-            i = k;
-        }
-
-        counter++;
-
+    for(int i = 0; i < copyOfLaserData.numberOfScans; i++){
         double lidarDist = copyOfLaserData.Data[i].scanDistance/1000.0;
-        double lidarAngle = (360-copyOfLaserData.Data[i].scanAngle)*TO_RADIANS;
+        double lidarAngle = 2*PI - copyOfLaserData.Data[i].scanAngle*TO_RADIANS;
 
-        if(lidarAngle > PI/2 && lidarAngle < 3*PI/2){
-            break;
+        if(lidarAngle >= leftThreshold && lidarAngle <= rightThreshold && lidarDist <= 2){
+            obstacleFound = true;
+        }
+        else if(((leftThreshold >= 3*PI/2 && lidarAngle >= leftThreshold) || (lidarAngle <= rightThreshold && rightThreshold <= PI/2)) && lidarDist <= 2){
+            obstacleFound = true;
         }
 
-
-        if(lidarDist == 0.0)
-            continue;
-
-        if(oldLidarDistLeft != -1 && std::abs(lidarDist - oldLidarDistLeft) > 0.45){
-            std::cout << "lidarAngle = " << lidarAngle << std::endl;
-            xp = oldLidarDistLeft*std::cos(oldlidarAngleLeft + robotA);
-            yp = oldLidarDistLeft*std::sin(oldlidarAngleLeft + robotA);
-            double dist = std::sqrt(std::pow(xp - robotX,2) + std::pow(yp - robotY, 2));
-            dist += std::sqrt(std::pow(setX - xp,2) + std::pow(setY - yp, 2));
-            leftDist = dist;
-            std::cout << "Found left obstacle end at index " << k << " , left length = " << leftDist << std::endl;
-            std::cout << "xp = " << xp << ", yp = " << yp << std::endl;
+        if(obstacleFound){
+            std::cout << "obstacle found" << std::endl;
+            obstacleCoord.x = lidarDist*std::cos(lidarAngle);
+            obstacleCoord.y = lidarDist*std::sin(lidarAngle);
             break;
-        }
-        else{
-            oldLidarDistLeft = lidarDist;
-            oldlidarAngleLeft = lidarAngle;
         }
     }
-    m.unlock();
-    counter = 0;
-
-    m.lock();
-    for(int k=obstacle_index; counter < 90; k++){
-        counter++;
-        if(k > copyOfLaserData.numberOfScans) {
-            i = k-copyOfLaserData.numberOfScans;
-        }
-        else{
-            i = k;
-        }
-
-        double lidarDist = copyOfLaserData.Data[i].scanDistance/1000.0;
-        double lidarAngle = (360-copyOfLaserData.Data[i].scanAngle)*TO_RADIANS;
-
-
-        if(lidarAngle > PI/2 && lidarAngle < 3*PI/2){
-            break;
-        }
-
-
-        if(lidarDist == 0.0)
-            continue;
-
-        if(oldLidarDistRight != -1 && std::abs(lidarDist - oldLidarDistRight) > 0.45){
-            std::cout << "lidarAngle = " << lidarAngle << ", " << (lidarAngle <= leftAngleCheck) << ", " << (lidarAngle > rightAngleCheck) << std::endl;
-            xp2 = oldLidarDistRight*std::cos(oldlidarAngleRight + robotA);
-            yp2 = oldLidarDistRight*std::sin(oldlidarAngleRight + robotA);
-            double dist = std::sqrt(std::pow(xp2 - robotX,2) + std::pow(yp2 - robotY, 2));
-            dist += std::sqrt(std::pow(setX - xp2,2) + std::pow(setY - yp2, 2));
-            rightDist = dist;
-            std::cout << "Found right obstacle end at index " << k << " , right length = " << rightDist << std::endl;
-            std::cout << "xp2 = " << xp2 << ", yp2 = " << yp2 << std::endl;
-            break;
-        }
-        else{
-            oldLidarDistRight = lidarDist;
-            oldlidarAngleRight = lidarAngle;
-        }
-    }
-
-    double angle_offset{};
-    double offset{0.45};
-    if(leftDist == -1 && rightDist == -1){
-        std::cout << "No obstacle corners were detected!" << std::endl;
-        m.unlock();
+    if(!obstacleFound){
+        if(obstacleCoord.x != -1)
+            obstacleCoord.x = obstacleCoord.y = -1;
         return;
     }
-    else if(leftDist >= rightDist){
-        if(rightDist == -1){
-            // checking left
-            std::cout << "Checking left" << std::endl;
-            angle_offset = (std::atan2(offset,oldLidarDistLeft));
-            xp = oldLidarDistLeft*std::cos(oldlidarAngleLeft + angle_offset+ robotA);
-            yp = oldLidarDistLeft*std::sin(oldlidarAngleLeft + angle_offset + robotA);
-            if(checkAccessibility(xp,yp)){
-                leftFound = true;
-            }
-        }
-        else{
-            // checking right
-            std::cout << "Checking right" << std::endl;
-            angle_offset = (std::atan2(offset,oldLidarDistRight));
-            xp = oldLidarDistRight*std::cos(oldlidarAngleRight - angle_offset+ robotA);
-            yp = oldLidarDistRight*std::sin(oldlidarAngleRight - angle_offset+ robotA);
-            if(!checkAccessibility(xp,yp)){
-                std::cout << "Checking left" << std::endl;
-                angle_offset = (std::atan2(offset,oldLidarDistLeft));
-                xp = oldLidarDistLeft*std::cos(oldlidarAngleLeft + angle_offset+ robotA);
-                yp = oldLidarDistLeft*std::sin(oldlidarAngleLeft + angle_offset+ robotA);
-                if(checkAccessibility(xp,yp)){
-                    leftFound = true;
-                }
-            }
-            else{
-                rightFound = true;
-            }
-        }
-    }
-    else if(leftDist < rightDist){
-        if(leftDist == -1){
-            // checking right
-            std::cout << "Checking right" << std::endl;
-            angle_offset = (std::atan2(offset,oldLidarDistRight));
-            xp = oldLidarDistRight*std::cos(oldlidarAngleRight - angle_offset + robotA);
-            yp = oldLidarDistRight*std::sin(oldlidarAngleRight - angle_offset+ robotA);
-            if(checkAccessibility(xp,yp)){
-                rightFound = true;
-            }
-        }
-        else{
-            // checking left
-            std::cout << "Checking left" << std::endl;
-            angle_offset = (std::atan2(offset,oldLidarDistLeft));
-            xp = oldLidarDistLeft*std::cos(oldlidarAngleLeft + angle_offset+ robotA);
-            yp = oldLidarDistLeft*std::sin(oldlidarAngleLeft + angle_offset+ robotA);
-            if(!checkAccessibility(xp,yp)){
-                std::cout << "Checking right" << std::endl;
-                angle_offset = (std::atan2(offset,oldLidarDistRight));
-                xp = oldLidarDistRight*std::cos(oldlidarAngleRight - angle_offset+ robotA);
-                yp = oldLidarDistRight*std::sin(oldlidarAngleRight - angle_offset+ robotA);
-                if(checkAccessibility(xp,yp)){
-                    rightFound = true;
-                }
-            }
-            else{
-                leftFound = true;
-            }
-        }
-    }
-
-    std::cout << "xp = " << xp << ", yp = " << yp << ", angle = " << angle_offset << std::endl;
-
-    if(leftFound || rightFound){
-        tempSetPoint.xn.push_back(xp);
-        tempSetPoint.yn.push_back(yp);
-        obstacle_detected = false;
-    }
-    else if(!leftFound && !rightFound && obstacle_detected){
-        robotStop = true;
-        std::cout << "Found no obstacle corensers, shutting down" << std::endl;
-    }
-
-    std::cout << "\n";
-    std::cout << "\n";
-    m.unlock();
 }
 
 bool MainWindow::checkAccessibility(double xp, double yp)
@@ -373,6 +148,15 @@ MainWindow::MainWindow(QWidget *parent) :
     obstacle_detected = false;
 
     controlType = 0;
+
+    zone_corner_left.x = -1;
+    zone_corner_left.y = -1;
+
+    zone_corner_right.x = -1;
+    zone_corner_right.y = -1;
+
+    obstacleCoord.x = -1;
+    obstacleCoord.y = -1;
 
     // disable 4. ulohy lebo pouzviam len kod z nej
     ui->pushButton_10->setDisabled(true);
@@ -449,20 +233,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
                 int xp=rect.width()-(rect.width()/2+lidarDist*2*sin(lidarAngle))+rect.topLeft().x();
                 int yp=rect.height()-(rect.height()/2+lidarDist*2*cos(lidarAngle))+rect.topLeft().y();
-
-                double d_crit = (((centerX/100+150)/20)/std::abs(std::sin(lidarAngle-robotAngle*TO_RADIANS)));
-
-                if(rect.contains(xp,yp)){
-                    if(lidarDist <= d_crit && (lidarAngle <= PI/2 || lidarAngle >= 3*PI/2))
-                    {
-                        pero2.setStyle(Qt::SolidLine);
-                        pero2.setWidth(3);
-                        pero2.setColor(Qt::red);
-                        painter.setBrush(Qt::red);
-                        painter.setPen(pero2);
-                    }
-                    painter.drawEllipse(QPoint(xp, yp),2,2);
-                }
+                painter.drawEllipse(QPoint(xp, yp),2,2);
             }
             mux.unlock();
 
@@ -508,6 +279,62 @@ void MainWindow::paintEvent(QPaintEvent *event)
                     painter.drawEllipse(QPoint(xp, yp),2,2);
                 }
             }
+            mux.lock();
+            if(zone_corner_left.x != -1 && zone_corner_left.y != -1){
+                pero2.setStyle(Qt::SolidLine);
+                pero2.setWidth(3);
+                pero2.setColor(Qt::green);
+                painter.setBrush(Qt::green);
+                painter.setPen(pero2);
+                double ex = (zone_corner_left.x - robotCoord.x)*1000;
+                double ey = (zone_corner_left.y - robotCoord.y)*1000;
+                double eDist = sqrt(ex*ex + ey*ey)/20;
+
+                double eRot = std::atan2(ey,ex)-robotCoord.a*TO_RADIANS;
+                eRot = std::atan2(std::sin(eRot), std::cos(eRot));
+
+                int xp=rect.width()-(rect.width()/2+eDist*2*sin(eRot))+rect.topLeft().x();
+                int yp=rect.height()-(rect.height()/2+eDist*2*cos(eRot))+rect.topLeft().y();
+
+                painter.drawEllipse(QPoint(xp, yp),2,2);
+            }
+            if(zone_corner_right.x != -1 && zone_corner_right.y != -1){
+                pero2.setStyle(Qt::SolidLine);
+                pero2.setWidth(3);
+                pero2.setColor(Qt::darkGreen);
+                painter.setBrush(Qt::darkGreen);
+                painter.setPen(pero2);
+                double ex = (zone_corner_right.x - robotCoord.x)*1000;
+                double ey = (zone_corner_right.y - robotCoord.y)*1000;
+                double eDist = sqrt(ex*ex + ey*ey)/20;
+
+                double eRot = std::atan2(ey,ex)-robotCoord.a*TO_RADIANS;
+                eRot = std::atan2(std::sin(eRot), std::cos(eRot));
+
+                int xp=rect.width()-(rect.width()/2+eDist*2*sin(eRot))+rect.topLeft().x();
+                int yp=rect.height()-(rect.height()/2+eDist*2*cos(eRot))+rect.topLeft().y();
+
+                painter.drawEllipse(QPoint(xp, yp),2,2);
+            }
+            if(obstacleCoord.x != -1 && obstacleCoord.y != -1){
+                pero2.setStyle(Qt::SolidLine);
+                pero2.setWidth(3);
+                pero2.setColor(Qt::red);
+                painter.setBrush(Qt::red);
+                painter.setPen(pero2);
+                double ex = (obstacleCoord.x - robotCoord.x)*1000;
+                double ey = (obstacleCoord.y - robotCoord.y)*1000;
+                double eDist = sqrt(ex*ex + ey*ey)/20;
+
+                double eRot = std::atan2(ey,ex)-robotCoord.a*TO_RADIANS;
+                eRot = std::atan2(std::sin(eRot), std::cos(eRot));
+
+                int xp=rect.width()-(rect.width()/2+eDist*2*sin(eRot))+rect.topLeft().x();
+                int yp=rect.height()-(rect.height()/2+eDist*2*cos(eRot))+rect.topLeft().y();
+
+                painter.drawEllipse(QPoint(xp, yp),2,2);
+            }
+            mux.unlock();
         }
     }
 }
@@ -543,14 +370,12 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
         }
 
         mutex mux;
-        if(robotStop){
-            forwardspeed = 0.0;
-            rotationspeed = 0.0;
-        }
-        else{
-            forwardspeed = robot_motion_param.trans_speed;
-            rotationspeed = robot_motion_param.rot_speed;
-        }
+//            forwardspeed = robot_motion_param.trans_speed;
+//            rotationspeed = robot_motion_param.rot_speed;
+
+            forwardspeed = 0;
+            rotationspeed = 0;
+
 
         if(forwardspeed == 0.0 && rotationspeed != 0.0){
             mux.lock();
@@ -576,6 +401,10 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
                     (robotCoord.y >= set_point.yn[set_point.yn.size()-1]-0.5) && (robotCoord.y <= set_point.yn[set_point.yn.size()-1]+0.5)){
                     set_point.xn.pop_back();
                     set_point.yn.pop_back();
+                    zone_corner_left.x = -1;
+                    zone_corner_left.y = -1;
+                    zone_corner_right.x = -1;
+                    zone_corner_right.y = -1;
                 }
             }
             if(!tempSetPoint.xn.empty()){
@@ -807,6 +636,10 @@ void MainWindow::on_pushButton_11_clicked()
 
         set_point.xn.clear();
         set_point.yn.clear();
+        zone_corner_left.x = -1;
+        zone_corner_left.y = -1;
+        zone_corner_right.x = -1;
+        zone_corner_right.y = -1;
     }
     else{
         if(set_point_map.xn.empty())
@@ -814,6 +647,10 @@ void MainWindow::on_pushButton_11_clicked()
 
         set_point_map.xn.clear();
         set_point_map.yn.clear();
+        zone_corner_left.x = -1;
+        zone_corner_left.y = -1;
+        zone_corner_right.x = -1;
+        zone_corner_right.y = -1;
     }
 
     mission_started = false;

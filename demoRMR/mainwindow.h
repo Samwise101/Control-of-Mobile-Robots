@@ -150,8 +150,10 @@ private:
      bool mission_started;
 
      SetPoint set_point;
-
      SetPoint set_point_map;
+     Point zone_corner_left;
+     Point zone_corner_right;
+     Point obstacleCoord;
 
      std::mutex mux;
      std::mutex mux2;
