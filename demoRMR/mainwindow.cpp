@@ -12,18 +12,12 @@
 
 void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, double robotA, double setX, double setY)
 {
-    double robotXCoord{robotX};
-    double robotYCoord{robotY};
-    double robotAngle{robotA};
-
-    double setPointX{setX};
-    double setPointY{setY};
 
     double ex = (setX - robotX);
     double ey = (setY - robotY);
     double eDist = sqrt(ex*ex + ey*ey);
 
-    double eRot = std::atan2(ey,ex) - robotCoord.a*TO_RADIANS;
+    double eRot = std::atan2(ey,ex) - robotA;
     eRot = std::atan2(std::sin(eRot), std::cos(eRot));
     if(eRot < 0){
         eRot  = eRot +2*PI;
@@ -33,6 +27,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
     }
 
     double angle_threshold = std::atan2(0.20, eDist);
+    double distance_threshold = 2.0;
 
     double leftThreshold = eRot + angle_threshold;
     double rightThreshold = eRot - angle_threshold;
@@ -40,7 +35,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
     if(leftThreshold < 0){
         leftThreshold  = leftThreshold + 2*PI;
     }
-    if(leftThreshold > 2*leftThreshold){
+    if(leftThreshold > 2*PI){
         leftThreshold = leftThreshold - 2*PI;
     }
 
@@ -60,19 +55,27 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         double lidarDist = copyOfLaserData.Data[i].scanDistance/1000.0;
 
         if(leftThreshold >= 0 && leftThreshold < PI/2 && rightThreshold > 3*PI/2 && rightThreshold <= 2*PI){
-            if((lidarAngle >= 0 && lidarAngle <= leftThreshold && lidarAngle < PI/2) || (lidarAngle >= rightThreshold && lidarAngle <= 2*PI && lidarAngle > 3*PI/2)){
+            if(((lidarAngle >= 0 && lidarAngle <= leftThreshold && lidarAngle < PI/2) || (lidarAngle >= rightThreshold && lidarAngle <= 2*PI && lidarAngle > 3*PI/2)) && lidarDist < distance_threshold && lidarDist <= (eDist+0.30)){
                 obstacleDetected = true;
             }
         }
-        else if(lidarAngle <= leftThreshold && lidarAngle >= rightThreshold){
+        else if(lidarAngle <= leftThreshold && lidarAngle >= rightThreshold && lidarDist < distance_threshold && lidarDist <= (eDist+0.30)){
             obstacleDetected = true;
+
         }
 
         if(obstacleDetected){
             obstacleCoord.x = robotX + lidarDist*std::cos(lidarAngle + robotAngle);
             obstacleCoord.y = robotY + lidarDist*std::sin(lidarAngle + robotAngle);
+            break;
         }
     }
+
+    if(!obstacleDetected){
+        obstacleCoord.x = -1;
+        obstacleCoord.y = -1;
+    }
+
     mux.unlock();
 
     std::cout << "eRot = " << eRot << std::endl;
@@ -225,28 +228,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 pero2.setColor(Qt::yellow);
                 painter.setBrush(Qt::yellow);
                 painter.setPen(pero2);
-
-                if(lidarAngle >= 0 && lidarAngle <= PI/2){
-                    pero2.setStyle(Qt::SolidLine);
-                    pero2.setWidth(3);
-                    pero2.setColor(Qt::green);
-                    painter.setBrush(Qt::green);
-                    painter.setPen(pero2);
-                }
-                if(lidarAngle > PI/2 && lidarAngle <= PI){
-                    pero2.setStyle(Qt::SolidLine);
-                    pero2.setWidth(3);
-                    pero2.setColor(Qt::blue);
-                    painter.setBrush(Qt::blue);
-                    painter.setPen(pero2);
-                }
-                if(lidarAngle <= 3*PI/2 && lidarAngle > PI){
-                    pero2.setStyle(Qt::SolidLine);
-                    pero2.setWidth(3);
-                    pero2.setColor(Qt::red);
-                    painter.setBrush(Qt::red);
-                    painter.setPen(pero2);
-                }
 
                 int xp=rect.width()-(rect.width()/2+lidarDist*2*sin(lidarAngle))+rect.topLeft().x();
                 int yp=rect.height()-(rect.height()/2+lidarDist*2*cos(lidarAngle))+rect.topLeft().y();
@@ -437,8 +418,8 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
             forwardspeed = robot_motion_param.trans_speed;
             rotationspeed = robot_motion_param.rot_speed;
 
-//            forwardspeed = 0;
-//            rotationspeed = 0;
+         //   forwardspeed = 0;
+         //   rotationspeed = 0;
 
 
         if(forwardspeed == 0.0 && rotationspeed != 0.0){
