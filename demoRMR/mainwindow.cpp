@@ -58,12 +58,17 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         double lidarAngle = (360-copyOfLaserData.Data[i].scanAngle)*TO_RADIANS;
         double lidarDist = copyOfLaserData.Data[i].scanDistance/1000.0;
 
+        if(lidarDist == 0.0)
+            continue;
+        else if(lidarDist < 0.3)
+            continue;
+
         if(leftThreshold >= 0 && leftThreshold <= PI/2 && rightThreshold >= 3*PI/2 && rightThreshold <= 2*PI){
-            if(((lidarAngle >= 0 && lidarAngle <= leftThreshold && lidarAngle < PI/2) || (lidarAngle >= rightThreshold && lidarAngle <= 2*PI && lidarAngle > 3*PI/2)) && lidarDist < distance_threshold && lidarDist <= (eDist+0.30)){
+            if(((lidarAngle >= 0 && lidarAngle <= leftThreshold && lidarAngle < PI/2) || (lidarAngle >= rightThreshold && lidarAngle <= 2*PI && lidarAngle > 3*PI/2)) && lidarDist < distance_threshold && lidarDist <= eDist){
                 obstacleDetected = true;
             }
         }
-        else if(lidarAngle <= leftThreshold && lidarAngle >= rightThreshold && lidarDist < distance_threshold && lidarDist <= (eDist+0.30)){
+        else if(lidarAngle <= leftThreshold && lidarAngle >= rightThreshold && lidarDist < distance_threshold && lidarDist <= eDist){
             obstacleDetected = true;
         }
 
@@ -106,14 +111,16 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
     bool leftCornerDetected{false};
     mux.lock();
     // trying to find the left obstacle corner
-    for(int i = obstacleLidarIndex; ; i--){
-        if(i < 0){
+    for(int i = obstacleLidarIndex; ;i--){
+        if(i <= 0){
             i = copyOfLaserData.numberOfScans + i;
         }
         double lidarAngle = (360-copyOfLaserData.Data[i].scanAngle)*TO_RADIANS;
         double lidarDist = copyOfLaserData.Data[i].scanDistance/1000.0;
 
         if(lidarDist == 0.0)
+            continue;
+        else if(lidarDist < 0.3)
             continue;
 
         if(leftThreshold >= 0 && leftThreshold <= PI/2 && rightThreshold >= 3*PI/2 && rightThreshold <= 2*PI){
@@ -157,6 +164,8 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         double lidarDist = copyOfLaserData.Data[i].scanDistance/1000.0;
 
         if(lidarDist == 0.0)
+            continue;
+        else if(lidarDist < 0.3)
             continue;
 
         if(leftThreshold >= 0 && leftThreshold <= PI/2 && rightThreshold >= 3*PI/2 && rightThreshold <= 2*PI){
@@ -486,11 +495,11 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
         }
 
         mutex mux;
-         //   forwardspeed = robot_motion_param.trans_speed;
-         //   rotationspeed = robot_motion_param.rot_speed;
+           forwardspeed = robot_motion_param.trans_speed;
+           rotationspeed = robot_motion_param.rot_speed;
 
-            forwardspeed = 0;
-            rotationspeed = 0;
+        //    forwardspeed = 0;
+        //    rotationspeed = 0;
 
 
         if(forwardspeed == 0.0 && rotationspeed != 0.0){
