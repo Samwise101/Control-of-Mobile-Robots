@@ -12,6 +12,10 @@
 
 void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, double robotA, double setX, double setY)
 {
+    if(!tempSetPoint.xn.empty()){
+        return;
+    }
+
     double ex = (setX - robotX);
     double ey = (setY - robotY);
     double eDist = sqrt(ex*ex + ey*ey);
@@ -131,14 +135,14 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         if(leftThreshold > PI/2){
             if(lidarAngle >= leftThreshold)
                 break;
-            else if(std::abs(oldLidarDistLeft-lidarDist) >= 0.1){
+            else if(std::abs(oldLidarDistLeft-lidarDist) >= 0.5){
                 leftCornerDetected = true;
             }
         }
         else{
             if(lidarAngle >= leftThreshold && lidarAngle <= rightThreshold)
                 break;
-            else if(std::abs(oldLidarDistLeft-lidarDist) >= 0.1){
+            else if(std::abs(oldLidarDistLeft-lidarDist) >= 0.5){
                 leftCornerDetected = true;
             }
         }
@@ -179,14 +183,14 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         if(rightThreshold < 3*PI/2){
             if(lidarAngle <= rightThreshold)
                 break;
-            else if(std::abs(oldLidarDistRight-lidarDist) >= 0.1){
+            else if(std::abs(oldLidarDistRight-lidarDist) >= 0.5){
                 rightCornerDetected = true;
             }
         }
         else{
             if(lidarAngle >= leftThreshold && lidarAngle <= rightThreshold)
                 break;
-            else if(std::abs(oldLidarDistRight-lidarDist) >= 0.1){
+            else if(std::abs(oldLidarDistRight-lidarDist) >= 0.5){
                 rightCornerDetected = true;
             }
         }
@@ -275,30 +279,30 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         }
     }
 
-//    if(rightAccessible && leftAccessible){
-//        double leftDist = calculateDistance(xpLeft, ypLeft, setX, setY, robotX, robotY);
-//        double rightDist = calculateDistance(xpRight, ypRight, setX, setY, robotX, robotY);
+    if(rightAccessible && leftAccessible){
+        double leftDist = calculateDistance(xpLeft, ypLeft, setX, setY, robotX, robotY);
+        double rightDist = calculateDistance(xpRight, ypRight, setX, setY, robotX, robotY);
 
-//        std::cout << "Left path distance = " << leftDist << std::endl;
-//        std::cout << "Right path distance = " << rightDist << std::endl;
+        std::cout << "Left path distance = " << leftDist << std::endl;
+        std::cout << "Right path distance = " << rightDist << std::endl;
 
-//        if(leftDist > rightDist){
-//            tempSetPoint.xn.push_back(xpRight);
-//            tempSetPoint.yn.push_back(ypRight);
-//        }
-//        else{
-//            tempSetPoint.xn.push_back(xpLeft);
-//            tempSetPoint.yn.push_back(ypLeft);
-//        }
-//    }
-//    else if(rightAccessible){
-//        tempSetPoint.xn.push_back(xpRight);
-//        tempSetPoint.yn.push_back(ypRight);
-//    }
-//    else if(leftAccessible){
-//        tempSetPoint.xn.push_back(xpLeft);
-//        tempSetPoint.yn.push_back(ypLeft);
-//    }
+        if(leftDist > rightDist){
+            tempSetPoint.xn.push_back(xpRight);
+            tempSetPoint.yn.push_back(ypRight);
+        }
+        else{
+            tempSetPoint.xn.push_back(xpLeft);
+            tempSetPoint.yn.push_back(ypLeft);
+        }
+    }
+    else if(rightAccessible){
+        tempSetPoint.xn.push_back(xpRight);
+        tempSetPoint.yn.push_back(ypRight);
+    }
+    else if(leftAccessible){
+        tempSetPoint.xn.push_back(xpLeft);
+        tempSetPoint.yn.push_back(ypLeft);
+    }
 }
 
 double MainWindow::calculateDistance(double& xp, double& yp, double& setX, double& setY, double& robotX, double& robotY){
