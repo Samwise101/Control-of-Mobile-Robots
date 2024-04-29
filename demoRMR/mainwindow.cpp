@@ -70,6 +70,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         if(obstacleDetected){
             obstacleCoord.x = robotX + lidarDist*std::cos(lidarAngle + robotA);
             obstacleCoord.y = robotY + lidarDist*std::sin(lidarAngle + robotA);
+            std::cout << "Found obstacle at: xp = " << obstacleCoord.x << ", yp =" << obstacleCoord.y << std::endl;
             obstacleLidarIndex = i;
             oldLidarDist = lidarDist;
             oldLidarAngle = lidarAngle;
@@ -112,8 +113,11 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         double lidarAngle = (360-copyOfLaserData.Data[i].scanAngle)*TO_RADIANS;
         double lidarDist = copyOfLaserData.Data[i].scanDistance/1000.0;
 
+        if(lidarDist == 0.0)
+            continue;
+
         if(leftThreshold >= 0 && leftThreshold <= PI/2 && rightThreshold >= 3*PI/2 && rightThreshold <= 2*PI){
-            if(lidarAngle >= 0 && lidarAngle <= leftThreshold && std::abs(oldLidarDist-lidarDist) > 0.5){
+            if(std::abs(oldLidarDist-lidarDist) > 0.5 && lidarAngle >= 0 && lidarAngle <= leftThreshold){
                 leftCornerDetected = true;
             }
         }
@@ -127,7 +131,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         if(leftCornerDetected){
             obstacleCornerLeft.x = robotX + oldLidarDist*std::cos(oldLidarAngle + robotA);
             obstacleCornerLeft.y = robotY + oldLidarDist*std::sin(oldLidarAngle + robotA);
-            std::cout << "Found left obstacle corner: xp = " << obstacleCornerLeft.x << ", yp =" << obstacleCornerLeft.y << std::endl;
+            std::cout << "Found LEFT obstacle corner: xp = " << obstacleCornerLeft.x << ", yp =" << obstacleCornerLeft.y << std::endl;
             break;
         }
         else{
@@ -136,9 +140,52 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         }
     }
 
-    if(!obstacleDetected){
-//        obstacleCornerLeft.x = -1;
-//        obstacleCornerLeft.y = -1;
+    if(!leftCornerDetected){
+        obstacleCornerLeft.x = -1;
+        obstacleCornerLeft.y = -1;
+    }
+    mux.unlock();
+
+    bool rightCornerDetected{false};
+    mux.lock();
+    // trying to find the left obstacle corner
+    for(int i = obstacleLidarIndex; ; i++){
+        if(i >= copyOfLaserData.numberOfScans){
+            i = i-copyOfLaserData.numberOfScans;
+        }
+        double lidarAngle = (360-copyOfLaserData.Data[i].scanAngle)*TO_RADIANS;
+        double lidarDist = copyOfLaserData.Data[i].scanDistance/1000.0;
+
+        if(lidarDist == 0.0)
+            continue;
+
+        if(leftThreshold >= 0 && leftThreshold <= PI/2 && rightThreshold >= 3*PI/2 && rightThreshold <= 2*PI){
+            if(std::abs(oldLidarDist-lidarDist) > 0.5 && lidarAngle <= 2*PI && lidarAngle >= rightThreshold){
+                rightCornerDetected = true;
+            }
+        }
+        else if(lidarAngle >= rightThreshold && std::abs(oldLidarDist-lidarDist) > 0.5){
+            rightCornerDetected = true;
+        }
+        else if(lidarAngle <= rightThreshold){
+            break;
+        }
+
+        if(rightCornerDetected){
+            obstacleCornerRight.x = robotX + oldLidarDist*std::cos(oldLidarAngle + robotA);
+            obstacleCornerRight.y = robotY + oldLidarDist*std::sin(oldLidarAngle + robotA);
+            std::cout << "Found RIGHT obstacle corner: xp = " << obstacleCornerRight.x << ", yp =" << obstacleCornerRight.y << std::endl;
+            break;
+        }
+        else{
+            oldLidarAngle = lidarAngle;
+            oldLidarDist = lidarDist;
+        }
+    }
+
+    if(!rightCornerDetected){
+        obstacleCornerRight.x = -1;
+        obstacleCornerRight.y = -1;
     }
     mux.unlock();
 }
