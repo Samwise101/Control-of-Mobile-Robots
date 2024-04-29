@@ -143,6 +143,7 @@ private:
 
      bool isRotating;
      bool robotStop;
+     bool goToWall;
 
      std::atomic_bool isStoped;
      std::atomic_bool canStart;

@@ -29,6 +29,10 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         eRot = eRot - 2*PI;
     }
 
+    if(goToWall){
+    //    return;
+    }
+
     std::cout << "eRot = " << eRot << std::endl;
 
     double angle_threshold = std::atan2(0.20, eDist);
@@ -96,7 +100,6 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         return;
     }
     mux.unlock();
-
     leftThreshold = eRot + PI/2;
     rightThreshold = eRot - PI/2;
 
@@ -303,6 +306,11 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         tempSetPoint.xn.push_back(xpLeft);
         tempSetPoint.yn.push_back(ypLeft);
     }
+    else{
+        mux.lock();
+        goToWall = true;
+        mux.unlock();
+    }
 }
 
 double MainWindow::calculateDistance(double& xp, double& yp, double& setX, double& setY, double& robotX, double& robotY){
@@ -383,6 +391,7 @@ MainWindow::MainWindow(QWidget *parent) :
     obstacle_detected = false;
 
     controlType = 0;
+    goToWall = false;
 
     zone_corner_left.x = -1;
     zone_corner_left.y = -1;
