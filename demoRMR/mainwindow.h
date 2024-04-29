@@ -85,7 +85,7 @@ public:
     void get_laserdata_and_write_to_map(double robotX, double robotY, double robotA, double setX, double setY);
 
     bool checkAccessibility(double xp, double yp);
-
+    double calculateDistance(double& xp, double& yp, double& setX, double& setY, double& robotX, double& robotY);
 
     int processThisCamera(cv::Mat cameraData);
 

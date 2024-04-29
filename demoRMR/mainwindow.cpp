@@ -108,6 +108,11 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         rightThreshold = rightThreshold - 2*PI;
     }
 
+    double leftCornerDist{-1.0};
+    double leftCornerAngle{-1.0};
+    double rightCornerDist{-1.0};
+    double rightCornerAngle{-1.0};
+
     bool leftCornerDetected{false};
     mux.lock();
     // trying to find the left obstacle corner
@@ -120,7 +125,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
 
         if(lidarDist == 0.0)
             continue;
-        else if(lidarDist < 0.3)
+        else if(lidarDist < 0.15)
             continue;
 
         if(leftThreshold >= 0 && leftThreshold <= PI/2 && rightThreshold >= 3*PI/2 && rightThreshold <= 2*PI){
@@ -138,6 +143,8 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         if(leftCornerDetected){
             obstacleCornerLeft.x = robotX + oldLidarDist*std::cos(oldLidarAngle + robotA);
             obstacleCornerLeft.y = robotY + oldLidarDist*std::sin(oldLidarAngle + robotA);
+            leftCornerAngle = oldLidarAngle;
+            leftCornerDist = oldLidarDist;
             std::cout << "Found LEFT obstacle corner: xp = " << obstacleCornerLeft.x << ", yp =" << obstacleCornerLeft.y << std::endl;
             break;
         }
@@ -157,7 +164,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
     mux.lock();
     // trying to find the left obstacle corner
     for(int i = obstacleLidarIndex; ; i++){
-        if(i >= copyOfLaserData.numberOfScans){
+        if(i > copyOfLaserData.numberOfScans){
             i = i-copyOfLaserData.numberOfScans;
         }
         double lidarAngle = (360-copyOfLaserData.Data[i].scanAngle)*TO_RADIANS;
@@ -165,11 +172,11 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
 
         if(lidarDist == 0.0)
             continue;
-        else if(lidarDist < 0.3)
+        else if(lidarDist < 0.15)
             continue;
 
-        if(leftThreshold >= 0 && leftThreshold <= PI/2 && rightThreshold >= 3*PI/2 && rightThreshold <= 2*PI){
-            if(std::abs(oldLidarDist-lidarDist) > 0.5 && lidarAngle <= 2*PI && lidarAngle >= rightThreshold){
+        if((lidarAngle+2*PI) <= (leftThreshold+2*PI) && (lidarAngle+2*PI) >= rightThreshold && rightThreshold >= 3*PI/2 && rightThreshold <= 2*PI){
+            if(std::abs(oldLidarDist-lidarDist) > 0.5){
                 rightCornerDetected = true;
             }
         }
@@ -183,6 +190,8 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         if(rightCornerDetected){
             obstacleCornerRight.x = robotX + oldLidarDist*std::cos(oldLidarAngle + robotA);
             obstacleCornerRight.y = robotY + oldLidarDist*std::sin(oldLidarAngle + robotA);
+            rightCornerAngle = oldLidarAngle;
+            rightCornerDist = oldLidarDist;
             std::cout << "Found RIGHT obstacle corner: xp = " << obstacleCornerRight.x << ", yp =" << obstacleCornerRight.y << std::endl;
             break;
         }
@@ -197,12 +206,113 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         obstacleCornerRight.y = -1;
     }
     mux.unlock();
+
+    bool leftAccessible{false};
+    bool rightAccessible{false};
+    double calculatedAngle{};
+
+    double xpRight{};
+    double ypRight{};
+    double xpLeft{};
+    double ypLeft{};
+
+    if(leftCornerDetected){
+        double angle_offset = asin(0.30/leftCornerDist);
+        calculatedAngle = leftCornerAngle + angle_offset;
+
+        if(calculatedAngle < 0){
+            calculatedAngle  = calculatedAngle + 2*PI;
+        }
+        if(calculatedAngle > 2*PI){
+            calculatedAngle = calculatedAngle - 2*PI;
+        }
+
+        double temp = std::sin(0.30/angle_offset);
+
+        xpLeft = robotX + temp*std::cos(calculatedAngle + robotA);
+        ypLeft = robotY + temp*std::sin(calculatedAngle + robotA);
+
+        if(checkAccessibility(xpLeft, ypLeft)){
+            std::cout << "Left corner is accessible!" << std::endl;
+            leftAccessible = true;
+        }
+        else{
+            std::cout << "Left corner is NOT accessible!" << std::endl;
+        }
+    }
+
+    if(rightCornerDetected){
+        double angle_offset = asin(0.30/rightCornerDist);
+        calculatedAngle = rightCornerAngle - angle_offset;
+
+        if(calculatedAngle < 0){
+            calculatedAngle  = calculatedAngle + 2*PI;
+        }
+        if(calculatedAngle > 2*PI){
+            calculatedAngle = calculatedAngle - 2*PI;
+        }
+
+        double temp = std::sin(0.30/angle_offset);
+
+        xpRight = robotX + temp*std::cos(calculatedAngle + robotA);
+        ypRight = robotY + temp*std::sin(calculatedAngle + robotA);
+
+        if(checkAccessibility(xpRight, ypRight)){
+            std::cout << "Right corner is accessible!" << std::endl;
+            rightAccessible = true;
+        }
+        else{
+            std::cout << "Right corner is NOT accessible!" << std::endl;
+        }
+    }
+
+    if(rightAccessible && leftAccessible){
+        double leftDist = calculateDistance(xpLeft, ypLeft, setX, setY, robotX, robotY);
+        double rightDist = calculateDistance(xpRight, ypRight, setX, setY, robotX, robotY);
+
+        std::cout << "Left path distance = " << leftDist << std::endl;
+        std::cout << "Right path distance = " << rightDist << std::endl;
+
+        if(leftDist > rightDist){
+            tempSetPoint.xn.push_back(xpRight);
+            tempSetPoint.yn.push_back(ypRight);
+        }
+        else{
+            tempSetPoint.xn.push_back(xpLeft);
+            tempSetPoint.yn.push_back(ypLeft);
+        }
+    }
+    else if(rightAccessible){
+        tempSetPoint.xn.push_back(xpRight);
+        tempSetPoint.yn.push_back(ypRight);
+    }
+    else if(leftAccessible){
+        tempSetPoint.xn.push_back(xpLeft);
+        tempSetPoint.yn.push_back(ypLeft);
+    }
+}
+
+double MainWindow::calculateDistance(double& xp, double& yp, double& setX, double& setY, double& robotX, double& robotY){
+    double ex = xp - robotX;
+    double ey = yp - robotY;
+    double eDist = std::sqrt(ex*ex+ey*ey);
+
+    double temp = eDist;
+
+    ex = setX - xp;
+    ey = setY - yp;
+    eDist = std::sqrt(ex*ex+ey*ey);
+
+    temp += eDist;
+    return temp;
 }
 
 bool MainWindow::checkAccessibility(double xp, double yp)
 {
     std::cout << "xp check= " << xp << ", yp check= " << yp << std::endl;
-    double search_offset = 0.18;
+    double search_offset = 0.15;
+    mutex m;
+    m.lock();
     for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++){
         double lidarDist = copyOfLaserData.Data[k].scanDistance/1000.0;
         double lidarAngle = (360-copyOfLaserData.Data[k].scanAngle)*TO_RADIANS;
@@ -219,10 +329,12 @@ bool MainWindow::checkAccessibility(double xp, double yp)
             std::cout << "Distance to obstacle corner point : " << distToObsCorner << std::endl;
             std::cout << "Corner is inaccessible!" << std::endl;
             std::cout << "xp = " << xp2 << ", yp = " << yp2 << std::endl;
+            m.unlock();
             return false;
         }
     }
     std::cout << "Corner is accessible!" << std::endl;
+    m.unlock();
     return true;
 }
 
@@ -495,11 +607,11 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
         }
 
         mutex mux;
-           forwardspeed = robot_motion_param.trans_speed;
-           rotationspeed = robot_motion_param.rot_speed;
+           //forwardspeed = robot_motion_param.trans_speed;
+           //rotationspeed = robot_motion_param.rot_speed;
 
-        //    forwardspeed = 0;
-        //    rotationspeed = 0;
+            forwardspeed = 0;
+            rotationspeed = 0;
 
 
         if(forwardspeed == 0.0 && rotationspeed != 0.0){
