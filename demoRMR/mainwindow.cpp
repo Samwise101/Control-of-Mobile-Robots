@@ -30,14 +30,14 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
     }
 
     mutex mux;
-    mux.lock();
     if(goToWall){
         return;
     }
-    else if(followWall){
-        int res = findWall();
+    mux.lock();
+    if(followWall){
+        wallDetectionResult = findWall();
 
-        switch(res){
+        switch(wallDetectionResult){
             case 0:
                 std::cout << "Could not find the wall" << std::endl;
                 break;
@@ -440,6 +440,8 @@ MainWindow::MainWindow(QWidget *parent) :
     isRotating = false;
     robotStop = false;
     obstacle_detected = false;
+
+    wallDetectionResult = 0;
 
     controlType = 0;
     goToWall = false;
@@ -905,15 +907,25 @@ void MainWindow::on_pushButton_9_clicked()
 {
     if(controlType == 0){
         if(set_point.xn.empty() && set_point.yn.empty()){
-            set_point.xn.insert(set_point.xn.begin(),ui->xn->text().toDouble());
-            set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
+            if(checkAccessibility(ui->xn->text().toDouble(),ui->yn->text().toDouble())){
+                set_point.xn.insert(set_point.xn.begin(),ui->xn->text().toDouble());
+                set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
+            }
+            else{
+                std::cout << "Point is part of the wall!" << std::endl;
+            }
             return;
         }
         else if(set_point.xn[0] == ui->xn->text().toDouble() && set_point.yn[0] == ui->yn->text().toDouble())
             return;
 
-        set_point.xn.insert(set_point.xn.begin(),ui->xn->text().toDouble());
-        set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
+        if(checkAccessibility(ui->xn->text().toDouble(),ui->yn->text().toDouble())){
+            set_point.xn.insert(set_point.xn.begin(),ui->xn->text().toDouble());
+            set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
+        }
+        else{
+            std::cout << "Point is part of the wall!" << std::endl;
+        }
     }
 }
 

@@ -147,6 +147,8 @@ private:
      bool goToWall;
      bool followWall;
 
+     int wallDetectionResult;
+
      std::atomic_bool isStoped;
      std::atomic_bool canStart;
 
