@@ -30,27 +30,9 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
     }
 
     mutex mux;
-    if(goToWall){
-        return;
-    }
     mux.lock();
     if(followWall){
-        wallDetectionResult = findWall();
 
-        switch(wallDetectionResult){
-            case 0:
-                std::cout << "Could not find the wall" << std::endl;
-                break;
-            case 1:
-                std::cout << "Found wall at the FRONT of the robot" << std::endl;
-                break;
-            case 2:
-                std::cout << "Found wall at the RIGHT side of the robot" << std::endl;
-                break;
-            case 3:
-                std::cout << "Found wall at BOTH THE FRONT AND RIGHT side of the robot" << std::endl;
-                break;
-            };
         return;
     }
     mux.unlock();
@@ -108,8 +90,20 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
             oldLidarAngleLeft = lidarAngle;
             oldLidarDistRight = lidarDist;
             oldLidarAngleRight = lidarAngle;
+            obstacleAngleToWall = lidarAngle;
+            if(robotA > obstacleAngleToWall){
+                angleDiference = robotA - obstacleAngleToWall;
+            }
+            else{
+                angleDiference = obstacleAngleToWall - robotA;
+            }
             break;
         }
+    }
+
+    if(goToWall){
+
+        return;
     }
 
     if(!obstacleDetected){
@@ -441,7 +435,7 @@ MainWindow::MainWindow(QWidget *parent) :
     robotStop = false;
     obstacle_detected = false;
 
-    wallDetectionResult = 0;
+    wallDetectionResult = -1;
 
     controlType = 0;
     goToWall = false;
@@ -665,14 +659,16 @@ void MainWindow::setUiValuesForMap(double setPointX, double setPointY)
 
 int MainWindow::processThisRobot(TKobukiData robotdata)
 {
+    mutex mux;
+
     if(mission_started){
         if(goToWall && obstacleCoord.x != -1){
             robot_odometry.robot_odometry(robotdata, true, robotCoord, 1);
             robot_motion_reg.robot_movement_reg(obstacleCoord.x, obstacleCoord.y, robotCoord, robot_motion_param,1, true);
         }
         else if(followWall && obstacleCoord.x != -1){
-            robot_odometry.robot_odometry(robotdata, true, robotCoord, 1);
-            robot_motion_reg.robot_movement_reg(obstacleCoord.x, obstacleCoord.y, robotCoord, robot_motion_param,1, true);
+
+
         }
         else if(!tempSetPoint.xn.empty()){
             robot_odometry.robot_odometry(robotdata, true, robotCoord, 1);
@@ -687,7 +683,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
             robot_motion_reg.robot_movement_reg(set_point_map.xn[set_point_map.xn.size() - 1], set_point_map.yn[set_point_map.yn.size() - 1], robotCoordMap, robot_motion_param,-1);
         }
 
-        mutex mux;
+
         forwardspeed = robot_motion_param.trans_speed;
         rotationspeed = robot_motion_param.rot_speed;
 
@@ -772,11 +768,11 @@ int MainWindow::processThisLidar(LaserMeasurement laserData)
     robotX = robotCoord.x;
     robotY = robotCoord.y;
     robotAngle = robotCoord.a*TO_RADIANS;
-//    if(mission_started && !tempSetPoint.xn.empty()){
-//        f = std::bind(&MainWindow::get_laserdata_and_write_to_map,this,robotX, robotY, robotAngle, tempSetPoint.xn[tempSetPoint.xn.size()-1],tempSetPoint.yn[tempSetPoint.yn.size()-1]);
-//        std::async(std::launch::async, f);
-//    }
-    if(mission_started && !set_point.xn.empty()){
+    if(mission_started && !tempSetPoint.xn.empty()){
+        f = std::bind(&MainWindow::get_laserdata_and_write_to_map,this,robotX, robotY, robotAngle, tempSetPoint.xn[tempSetPoint.xn.size()-1],tempSetPoint.yn[tempSetPoint.yn.size()-1]);
+        std::async(std::launch::async, f);
+    }
+    else if(mission_started && !set_point.xn.empty()){
         f = std::bind(&MainWindow::get_laserdata_and_write_to_map,this,robotX, robotY, robotAngle, set_point.xn[set_point.xn.size()-1],set_point.yn[set_point.yn.size()-1]);
         std::async(std::launch::async, f);
     }

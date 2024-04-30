@@ -25,7 +25,7 @@ public:
     Regulator();
 
     void robot_movement_reg(const double& setX, const double& setY, const RobotCoordRotation &robotCoord, robot_motion& robot_motion_param, const int sign, const bool goToWall=false);
-
+    void robot_rotate_reg(const double& angle, const RobotCoordRotation &robotCoord, robot_motion& robot_motion_param);
 private:
     bool missionStarted;
     bool high_setpoint_angle;

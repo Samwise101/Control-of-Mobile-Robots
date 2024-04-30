@@ -167,6 +167,9 @@ private:
 
      QJoysticks *instance;
 
+     double obstacleAngleToWall;
+     double angleDiference;
+
      RobotCoordRotation robotCoord;
      RobotCoordRotation robotCoordMap;
      robot_motion robot_motion_param{0.0, 0.65, 0.0, 0.4, 0.1};
