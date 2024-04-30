@@ -67,7 +67,7 @@ class MainWindow : public QMainWindow
 
 public:
     bool useCamera1;
-  //  cv::VideoCapture cap;
+    //  cv::VideoCapture cap;
 
     int actIndex;
     //    cv::Mat frame[3];
@@ -86,7 +86,6 @@ public:
 
     bool checkAccessibility(double xp, double yp);
     double calculateDistance(double& xp, double& yp, double& setX, double& setY, double& robotX, double& robotY);
-    int findWall();
 
     int processThisCamera(cv::Mat cameraData);
 
@@ -118,75 +117,68 @@ private slots:
     void on_comboBox_2_activated(int index);
 
 private:
-     JOYINFO joystickInfo;
-     Ui::MainWindow *ui;
-     void paintEvent(QPaintEvent *event);// Q_DECL_OVERRIDE;
-     int updateLaserPicture;
-     LaserMeasurement copyOfLaserData;
-     std::string ipaddress;
-     Robot robot;
-     bool isTest;
-     TKobukiData robotdata;
-     robot_connect_data robot_data;
-     int datacounter;
-     QTimer *timer;
-     double robotX;
-     double robotY;
-     double robotAngle;
+    JOYINFO joystickInfo;
+    Ui::MainWindow *ui;
+    void paintEvent(QPaintEvent *event);// Q_DECL_OVERRIDE;
+    int updateLaserPicture;
+    LaserMeasurement copyOfLaserData;
+    std::string ipaddress;
+    Robot robot;
+    bool isTest;
+    TKobukiData robotdata;
+    robot_connect_data robot_data;
+    int datacounter;
+    QTimer *timer;
+    double robotX;
+    double robotY;
+    double robotAngle;
 
-     SetPoint tempSetPoint;
+    bool obstacle_detected;
 
-     bool obstacle_detected;
+    int controlType;
 
-     int controlType;
+    std::function<void()> f;
 
-     std::function<void()> f;
+    bool isRotating;
+    bool robotStop;
+    bool goToWall;
 
-     bool isRotating;
-     bool robotStop;
-     bool goToWall;
-     bool followWall;
+    std::atomic_bool isStoped;
+    std::atomic_bool canStart;
 
-     int wallDetectionResult;
+    bool mission_started;
 
-     std::atomic_bool isStoped;
-     std::atomic_bool canStart;
+    SetPoint set_point;
+    SetPoint set_point_map;
+    Point zone_corner_left;
+    Point zone_corner_right;
+    Point obstacleCoord;
+    Point obstacleCornerLeft;
+    Point obstacleCornerRight;
+    Point tempSetPoint;
 
-     bool mission_started;
+    std::mutex mux;
+    std::mutex mux2;
 
-     SetPoint set_point;
-     SetPoint set_point_map;
-     Point zone_corner_left;
-     Point zone_corner_right;
-     Point obstacleCoord;
-     Point obstacleCornerLeft;
-     Point obstacleCornerRight;
+    QJoysticks *instance;
 
-     std::mutex mux;
-     std::mutex mux2;
+    RobotCoordRotation robotCoord;
+    RobotCoordRotation robotCoordMap;
+    robot_motion robot_motion_param{0.0, 0.65, 0.0, 0.4, 0.1};
 
-     QJoysticks *instance;
+    odometry robot_odometry;
+    Regulator robot_motion_reg;
+    mapping mapDialog;
 
-     double obstacleAngleToWall;
-     double angleDiference;
+    std::thread mappingThread;
 
-     RobotCoordRotation robotCoord;
-     RobotCoordRotation robotCoordMap;
-     robot_motion robot_motion_param{0.0, 0.65, 0.0, 0.4, 0.1};
-
-     odometry robot_odometry;
-     Regulator robot_motion_reg;
-     mapping mapDialog;
-
-     std::thread mappingThread;
-
-     double forwardspeed;//mm/s
-     double rotationspeed;//omega/s
+    double forwardspeed;//mm/s
+    double rotationspeed;//omega/s
 public slots:
-     void setUiValues(double robotX,double robotY,double robotFi);
+    void setUiValues(double robotX,double robotY,double robotFi);
     void setUiValuesForMap(double setPointX, double setPointY);
 signals:
-     void uiValuesChanged(double newrobotX,double newrobotY,double newrobotFi); ///toto nema telo
+    void uiValuesChanged(double newrobotX,double newrobotY,double newrobotFi); ///toto nema telo
     void uiValuesChangedMap(double setPointX, double setPointY);
 };
 

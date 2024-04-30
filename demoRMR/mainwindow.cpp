@@ -12,9 +12,6 @@
 
 void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, double robotA, double setX, double setY)
 {
-    if(!tempSetPoint.xn.empty()){
-        return;
-    }
 
     double ex = (setX - robotX);
     double ey = (setY - robotY);
@@ -29,13 +26,11 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         eRot = eRot - 2*PI;
     }
 
-    mutex mux;
-    mux.lock();
-    if(followWall){
-
-        return;
+    if(goToWall){
+        //    return;
     }
-    mux.unlock();
+
+    // std::cout << "eRot = " << eRot << std::endl;
 
     double angle_threshold = std::atan2(0.25, eDist);
     double distance_threshold = 2.0;
@@ -57,6 +52,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         rightThreshold = rightThreshold - 2*PI;
     }
 
+    mutex mux;
     mux.lock();
     bool obstacleDetected{false};
     int obstacleLidarIndex{-1};
@@ -90,20 +86,8 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
             oldLidarAngleLeft = lidarAngle;
             oldLidarDistRight = lidarDist;
             oldLidarAngleRight = lidarAngle;
-            obstacleAngleToWall = lidarAngle;
-            if(robotA > obstacleAngleToWall){
-                angleDiference = robotA - obstacleAngleToWall;
-            }
-            else{
-                angleDiference = obstacleAngleToWall - robotA;
-            }
-            std::cout << "Angle difference to wall = " << angleDiference << std::endl;
             break;
         }
-    }
-
-    if(goToWall){
-        return;
     }
 
     if(!obstacleDetected){
@@ -185,7 +169,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
 
     bool rightCornerDetected{false};
     mux.lock();
-//  trying to find the left obstacle corner
+    //  trying to find the left obstacle corner
     for(int i = obstacleLidarIndex; ; i++){
         if(i >= copyOfLaserData.numberOfScans){
             i = i-copyOfLaserData.numberOfScans;
@@ -303,60 +287,26 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         std::cout << "Right path distance = " << rightDist << std::endl;
 
         if(leftDist > rightDist){
-            tempSetPoint.xn.push_back(xpRight);
-            tempSetPoint.yn.push_back(ypRight);
+            tempSetPoint.x = xpRight;
+            tempSetPoint.y = ypRight;
         }
         else{
-            tempSetPoint.xn.push_back(xpLeft);
-            tempSetPoint.yn.push_back(ypLeft);
+            tempSetPoint.x = xpLeft;
+            tempSetPoint.y = ypLeft;
         }
     }
     else if(rightAccessible){
-        tempSetPoint.xn.push_back(xpRight);
-        tempSetPoint.yn.push_back(ypRight);
+        tempSetPoint.x = xpRight;
+        tempSetPoint.y = ypRight;
     }
     else if(leftAccessible){
-        tempSetPoint.xn.push_back(xpLeft);
-        tempSetPoint.yn.push_back(ypLeft);
+        tempSetPoint.x = xpLeft;
+        tempSetPoint.y = ypLeft;
     }
     else{
-        std::cout << "No accessible points found, switching to wall following!" << std::endl;
         mux.lock();
-        if(!goToWall)
-            goToWall = true;
+        goToWall = true;
         mux.unlock();
-    }
-}
-
-int MainWindow::findWall()
-{
-    mutex mux;
-    mux.lock();
-    bool right{false};
-    bool front{false};
-    for(int i = 0; i < copyOfLaserData.numberOfScans; i++){
-        double lidarDist = copyOfLaserData.Data[i].scanDistance/1000.0;
-        double lidarAngle = (360-copyOfLaserData.Data[i].scanAngle)*TO_RADIANS;
-
-        if(lidarAngle > 5*PI/4 && lidarAngle < 7*PI/4){
-            right = true;
-        }
-        else if((lidarAngle < PI/4 && lidarAngle >= 0) || (lidarAngle >= 7*PI/4 && lidarAngle <= 2*PI))
-            front = true;
-    }
-    mux.unlock();
-
-    if(right && front){
-        return 3;
-    }
-    else if(right){
-        return 2;
-    }
-    else if(front){
-        return 1;
-    }
-    else{
-        return 0;
     }
 }
 
@@ -364,6 +314,7 @@ double MainWindow::calculateDistance(double& xp, double& yp, double& setX, doubl
     double ex = xp - robotX;
     double ey = yp - robotY;
     double eDist = std::sqrt(ex*ex+ey*ey);
+
     double temp = eDist;
 
     ex = setX - xp;
@@ -417,6 +368,9 @@ MainWindow::MainWindow(QWidget *parent) :
     actIndex=-1;
     useCamera1=false;
 
+    tempSetPoint.x = -1;
+    tempSetPoint.y = -1;
+
     ui->xn->setText("0.0");
     ui->yn->setText("0.0");
 
@@ -436,11 +390,8 @@ MainWindow::MainWindow(QWidget *parent) :
     robotStop = false;
     obstacle_detected = false;
 
-    wallDetectionResult = -1;
-
     controlType = 0;
     goToWall = false;
-    followWall = false;
 
     zone_corner_left.x = -1;
     zone_corner_left.y = -1;
@@ -554,6 +505,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
                         eRot = eRot - 2*PI;
                     }
 
+                    std::cout << "eRot draw = " << eRot << std::endl;
+
                     int xp=rect.width()-(rect.width()/2+eDist*2*sin(eRot))+rect.topLeft().x();
                     int yp=rect.height()-(rect.height()/2+eDist*2*cos(eRot))+rect.topLeft().y();
 
@@ -561,25 +514,24 @@ void MainWindow::paintEvent(QPaintEvent *event)
                 }
             }
 
-            if(!tempSetPoint.xn.empty()){
+            if(tempSetPoint.x != -1){
                 pero2.setStyle(Qt::SolidLine);
                 pero2.setWidth(3);
                 pero2.setColor(Qt::cyan);
                 painter.setBrush(Qt::cyan);
                 painter.setPen(pero2);
-                for(int i = 0; i < tempSetPoint.xn.size(); i++){
-                    double ex = (tempSetPoint.xn[i] - robotCoord.x)*1000;
-                    double ey = (tempSetPoint.yn[i] - robotCoord.y)*1000;
-                    double eDist = sqrt(ex*ex + ey*ey)/20;
 
-                    double eRot = std::atan2(ey,ex)-robotCoord.a*TO_RADIANS;
-                    eRot = std::atan2(std::sin(eRot), std::cos(eRot));
+                double ex = (tempSetPoint.x - robotCoord.x)*1000;
+                double ey = (tempSetPoint.y - robotCoord.y)*1000;
+                double eDist = sqrt(ex*ex + ey*ey)/20;
 
-                    int xp=rect.width()-(rect.width()/2+eDist*2*sin(eRot))+rect.topLeft().x();
-                    int yp=rect.height()-(rect.height()/2+eDist*2*cos(eRot))+rect.topLeft().y();
+                double eRot = std::atan2(ey,ex)-robotCoord.a*TO_RADIANS;
+                eRot = std::atan2(std::sin(eRot), std::cos(eRot));
 
-                    painter.drawEllipse(QPoint(xp, yp),2,2);
-                }
+                int xp=rect.width()-(rect.width()/2+eDist*2*sin(eRot))+rect.topLeft().x();
+                int yp=rect.height()-(rect.height()/2+eDist*2*cos(eRot))+rect.topLeft().y();
+
+                painter.drawEllipse(QPoint(xp, yp),2,2);
             }
             mux.unlock();
             mux.lock();
@@ -660,20 +612,13 @@ void MainWindow::setUiValuesForMap(double setPointX, double setPointY)
 
 int MainWindow::processThisRobot(TKobukiData robotdata)
 {
-    mutex mux;
+
+    std::cout << "Gyro = " << robotdata.GyroAngle/100.0 << std::endl;
 
     if(mission_started){
-        if(goToWall && obstacleCoord.x != -1){
+        if(tempSetPoint.x != -1 && tempSetPoint.y != -1){
             robot_odometry.robot_odometry(robotdata, true, robotCoord, 1);
-            robot_motion_reg.robot_movement_reg(obstacleCoord.x, obstacleCoord.y, robotCoord, robot_motion_param,1, true);
-        }
-        else if(followWall && obstacleCoord.x != -1){
-
-
-        }
-        else if(!tempSetPoint.xn.empty()){
-            robot_odometry.robot_odometry(robotdata, true, robotCoord, 1);
-            robot_motion_reg.robot_movement_reg(tempSetPoint.xn[tempSetPoint.xn.size()-1], tempSetPoint.yn[tempSetPoint.yn.size()-1], robotCoord, robot_motion_param,1);
+            robot_motion_reg.robot_movement_reg(tempSetPoint.x, tempSetPoint.y, robotCoord, robot_motion_param,1);
         }
         else if(controlType == 0 && !set_point.xn.empty()){
             robot_odometry.robot_odometry(robotdata, true, robotCoord, 1);
@@ -684,12 +629,12 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
             robot_motion_reg.robot_movement_reg(set_point_map.xn[set_point_map.xn.size() - 1], set_point_map.yn[set_point_map.yn.size() - 1], robotCoordMap, robot_motion_param,-1);
         }
 
-
+        mutex mux;
         forwardspeed = robot_motion_param.trans_speed;
         rotationspeed = robot_motion_param.rot_speed;
 
-//        forwardspeed = 0;
-//        rotationspeed = 0;
+        //        forwardspeed = 0;
+        //        rotationspeed = 0;
 
 
         if(forwardspeed == 0.0 && rotationspeed != 0.0){
@@ -711,26 +656,22 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
             forwardspeed = 0;
             robot.setArcSpeed(forwardspeed, 0);
 
-            mux.lock();
-            if(goToWall){
-                std::cout << "At the wall!" << std::endl;
-                goToWall = false;
-                followWall = true;
-            }
-            mux.unlock();
-
             if(!set_point.xn.empty()){
                 if((robotCoord.x >= set_point.xn[set_point.xn.size()-1]-0.5) && (robotCoord.x <= set_point.xn[set_point.xn.size()-1]+0.5) &&
                     (robotCoord.y >= set_point.yn[set_point.yn.size()-1]-0.5) && (robotCoord.y <= set_point.yn[set_point.yn.size()-1]+0.5)){
                     set_point.xn.pop_back();
                     set_point.yn.pop_back();
+                    zone_corner_left.x = -1;
+                    zone_corner_left.y = -1;
+                    zone_corner_right.x = -1;
+                    zone_corner_right.y = -1;
                 }
             }
-            if(!tempSetPoint.xn.empty()){
-                if((robotCoord.x >= tempSetPoint.xn[tempSetPoint.xn.size()-1]-0.5) && (robotCoord.x <= tempSetPoint.xn[tempSetPoint.xn.size()-1]+0.5) &&
-                    (robotCoord.y >= tempSetPoint.yn[tempSetPoint.yn.size()-1]-0.5) && (robotCoord.y <= tempSetPoint.yn[tempSetPoint.yn.size()-1]+0.5)){
-                    tempSetPoint.xn.pop_back();
-                    tempSetPoint.yn.pop_back();
+            if(tempSetPoint.x != -1){
+                if((robotCoord.x >= tempSetPoint.x-0.5) && (robotCoord.x <= tempSetPoint.x+0.5) &&
+                    (robotCoord.y >= tempSetPoint.y-0.5) && (robotCoord.y <= tempSetPoint.y+0.5)){
+                    tempSetPoint.x = -1;
+                    tempSetPoint.y = -1;
                 }
             }
         }
@@ -769,8 +710,8 @@ int MainWindow::processThisLidar(LaserMeasurement laserData)
     robotX = robotCoord.x;
     robotY = robotCoord.y;
     robotAngle = robotCoord.a*TO_RADIANS;
-    if(mission_started && !tempSetPoint.xn.empty()){
-        f = std::bind(&MainWindow::get_laserdata_and_write_to_map,this,robotX, robotY, robotAngle, tempSetPoint.xn[tempSetPoint.xn.size()-1],tempSetPoint.yn[tempSetPoint.yn.size()-1]);
+    if(mission_started && tempSetPoint.x != -1){
+        f = std::bind(&MainWindow::get_laserdata_and_write_to_map,this,robotX, robotY, robotAngle, tempSetPoint.x,tempSetPoint.y);
         std::async(std::launch::async, f);
     }
     else if(mission_started && !set_point.xn.empty()){
@@ -904,25 +845,15 @@ void MainWindow::on_pushButton_9_clicked()
 {
     if(controlType == 0){
         if(set_point.xn.empty() && set_point.yn.empty()){
-            if(checkAccessibility(ui->xn->text().toDouble(),ui->yn->text().toDouble())){
-                set_point.xn.insert(set_point.xn.begin(),ui->xn->text().toDouble());
-                set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
-            }
-            else{
-                std::cout << "Point is part of the wall!" << std::endl;
-            }
+            set_point.xn.insert(set_point.xn.begin(),ui->xn->text().toDouble());
+            set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
             return;
         }
         else if(set_point.xn[0] == ui->xn->text().toDouble() && set_point.yn[0] == ui->yn->text().toDouble())
             return;
 
-        if(checkAccessibility(ui->xn->text().toDouble(),ui->yn->text().toDouble())){
-            set_point.xn.insert(set_point.xn.begin(),ui->xn->text().toDouble());
-            set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
-        }
-        else{
-            std::cout << "Point is part of the wall!" << std::endl;
-        }
+        set_point.xn.insert(set_point.xn.begin(),ui->xn->text().toDouble());
+        set_point.yn.insert(set_point.yn.begin(),ui->yn->text().toDouble());
     }
 }
 
@@ -965,12 +896,8 @@ void MainWindow::on_pushButton_11_clicked()
 
         set_point.xn.clear();
         set_point.yn.clear();
-        tempSetPoint.xn.clear();
-        tempSetPoint.yn.clear();
-        zone_corner_left.x = -1;
-        zone_corner_left.y = -1;
-        zone_corner_right.x = -1;
-        zone_corner_right.y = -1;
+        tempSetPoint.x = -1;
+        tempSetPoint.y = -1;
     }
     else{
         if(set_point_map.xn.empty())
@@ -978,12 +905,8 @@ void MainWindow::on_pushButton_11_clicked()
 
         set_point_map.xn.clear();
         set_point_map.yn.clear();
-        tempSetPoint.xn.clear();
-        tempSetPoint.yn.clear();
-        zone_corner_left.x = -1;
-        zone_corner_left.y = -1;
-        zone_corner_right.x = -1;
-        zone_corner_right.y = -1;
+        tempSetPoint.x = -1;
+        tempSetPoint.y = -1;
     }
 
     mission_started = false;
