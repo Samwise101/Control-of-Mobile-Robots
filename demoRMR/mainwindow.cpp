@@ -37,7 +37,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
     }
     mux.unlock();
 
-    double angle_threshold = std::atan2(0.20, eDist);
+    double angle_threshold = std::atan2(0.25, eDist);
     double distance_threshold = 2.0;
 
     double leftThreshold = eRot + angle_threshold;
@@ -97,12 +97,12 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
             else{
                 angleDiference = obstacleAngleToWall - robotA;
             }
+            std::cout << "Angle difference to wall = " << angleDiference << std::endl;
             break;
         }
     }
 
     if(goToWall){
-
         return;
     }
 
@@ -322,7 +322,8 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
     else{
         std::cout << "No accessible points found, switching to wall following!" << std::endl;
         mux.lock();
-        goToWall = true;
+        if(!goToWall)
+            goToWall = true;
         mux.unlock();
     }
 }
@@ -964,6 +965,8 @@ void MainWindow::on_pushButton_11_clicked()
 
         set_point.xn.clear();
         set_point.yn.clear();
+        tempSetPoint.xn.clear();
+        tempSetPoint.yn.clear();
         zone_corner_left.x = -1;
         zone_corner_left.y = -1;
         zone_corner_right.x = -1;
@@ -975,6 +978,8 @@ void MainWindow::on_pushButton_11_clicked()
 
         set_point_map.xn.clear();
         set_point_map.yn.clear();
+        tempSetPoint.xn.clear();
+        tempSetPoint.yn.clear();
         zone_corner_left.x = -1;
         zone_corner_left.y = -1;
         zone_corner_right.x = -1;
