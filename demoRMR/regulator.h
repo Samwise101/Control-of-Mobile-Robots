@@ -24,7 +24,7 @@ class Regulator
 public:
     Regulator();
 
-    void robot_movement_reg(const double& setX, const double& setY, const RobotCoordRotation &robotCoord, robot_motion& robot_motion_param, const int sign);
+    void robot_movement_reg(const double& setX, const double& setY, const RobotCoordRotation &robotCoord, robot_motion& robot_motion_param, const int sign, const bool goToWall=false);
 
 private:
     bool missionStarted;

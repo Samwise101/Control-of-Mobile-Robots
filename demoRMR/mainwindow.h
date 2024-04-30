@@ -86,6 +86,7 @@ public:
 
     bool checkAccessibility(double xp, double yp);
     double calculateDistance(double& xp, double& yp, double& setX, double& setY, double& robotX, double& robotY);
+    int findWall();
 
     int processThisCamera(cv::Mat cameraData);
 
@@ -144,6 +145,7 @@ private:
      bool isRotating;
      bool robotStop;
      bool goToWall;
+     bool followWall;
 
      std::atomic_bool isStoped;
      std::atomic_bool canStart;
@@ -180,7 +182,7 @@ public slots:
     void setUiValuesForMap(double setPointX, double setPointY);
 signals:
      void uiValuesChanged(double newrobotX,double newrobotY,double newrobotFi); ///toto nema telo
-     void uiValuesChangedMap(double setPointX, double setPointY);
+    void uiValuesChangedMap(double setPointX, double setPointY);
 };
 
 

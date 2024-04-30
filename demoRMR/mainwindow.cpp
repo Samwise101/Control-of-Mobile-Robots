@@ -29,11 +29,31 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         eRot = eRot - 2*PI;
     }
 
+    mutex mux;
+    mux.lock();
     if(goToWall){
-    //    return;
+        return;
     }
+    else if(followWall){
+        int res = findWall();
 
-    std::cout << "eRot = " << eRot << std::endl;
+        switch(res){
+            case 0:
+                std::cout << "Could not find the wall" << std::endl;
+                break;
+            case 1:
+                std::cout << "Found wall at the FRONT of the robot" << std::endl;
+                break;
+            case 2:
+                std::cout << "Found wall at the RIGHT side of the robot" << std::endl;
+                break;
+            case 3:
+                std::cout << "Found wall at BOTH THE FRONT AND RIGHT side of the robot" << std::endl;
+                break;
+            };
+        return;
+    }
+    mux.unlock();
 
     double angle_threshold = std::atan2(0.20, eDist);
     double distance_threshold = 2.0;
@@ -55,7 +75,6 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         rightThreshold = rightThreshold - 2*PI;
     }
 
-    mutex mux;
     mux.lock();
     bool obstacleDetected{false};
     int obstacleLidarIndex{-1};
@@ -307,9 +326,42 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX, double robotY, do
         tempSetPoint.yn.push_back(ypLeft);
     }
     else{
+        std::cout << "No accessible points found, switching to wall following!" << std::endl;
         mux.lock();
         goToWall = true;
         mux.unlock();
+    }
+}
+
+int MainWindow::findWall()
+{
+    mutex mux;
+    mux.lock();
+    bool right{false};
+    bool front{false};
+    for(int i = 0; i < copyOfLaserData.numberOfScans; i++){
+        double lidarDist = copyOfLaserData.Data[i].scanDistance/1000.0;
+        double lidarAngle = (360-copyOfLaserData.Data[i].scanAngle)*TO_RADIANS;
+
+        if(lidarAngle > 5*PI/4 && lidarAngle < 7*PI/4){
+            right = true;
+        }
+        else if((lidarAngle < PI/4 && lidarAngle >= 0) || (lidarAngle >= 7*PI/4 && lidarAngle <= 2*PI))
+            front = true;
+    }
+    mux.unlock();
+
+    if(right && front){
+        return 3;
+    }
+    else if(right){
+        return 2;
+    }
+    else if(front){
+        return 1;
+    }
+    else{
+        return 0;
     }
 }
 
@@ -317,7 +369,6 @@ double MainWindow::calculateDistance(double& xp, double& yp, double& setX, doubl
     double ex = xp - robotX;
     double ey = yp - robotY;
     double eDist = std::sqrt(ex*ex+ey*ey);
-
     double temp = eDist;
 
     ex = setX - xp;
@@ -392,6 +443,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     controlType = 0;
     goToWall = false;
+    followWall = false;
 
     zone_corner_left.x = -1;
     zone_corner_left.y = -1;
@@ -505,8 +557,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
                         eRot = eRot - 2*PI;
                     }
 
-                    std::cout << "eRot draw = " << eRot << std::endl;
-
                     int xp=rect.width()-(rect.width()/2+eDist*2*sin(eRot))+rect.topLeft().x();
                     int yp=rect.height()-(rect.height()/2+eDist*2*cos(eRot))+rect.topLeft().y();
 
@@ -614,7 +664,15 @@ void MainWindow::setUiValuesForMap(double setPointX, double setPointY)
 int MainWindow::processThisRobot(TKobukiData robotdata)
 {
     if(mission_started){
-        if(!tempSetPoint.xn.empty()){
+        if(goToWall && obstacleCoord.x != -1){
+            robot_odometry.robot_odometry(robotdata, true, robotCoord, 1);
+            robot_motion_reg.robot_movement_reg(obstacleCoord.x, obstacleCoord.y, robotCoord, robot_motion_param,1, true);
+        }
+        else if(followWall && obstacleCoord.x != -1){
+            robot_odometry.robot_odometry(robotdata, true, robotCoord, 1);
+            robot_motion_reg.robot_movement_reg(obstacleCoord.x, obstacleCoord.y, robotCoord, robot_motion_param,1, true);
+        }
+        else if(!tempSetPoint.xn.empty()){
             robot_odometry.robot_odometry(robotdata, true, robotCoord, 1);
             robot_motion_reg.robot_movement_reg(tempSetPoint.xn[tempSetPoint.xn.size()-1], tempSetPoint.yn[tempSetPoint.yn.size()-1], robotCoord, robot_motion_param,1);
         }
@@ -654,15 +712,19 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
             forwardspeed = 0;
             robot.setArcSpeed(forwardspeed, 0);
 
+            mux.lock();
+            if(goToWall){
+                std::cout << "At the wall!" << std::endl;
+                goToWall = false;
+                followWall = true;
+            }
+            mux.unlock();
+
             if(!set_point.xn.empty()){
                 if((robotCoord.x >= set_point.xn[set_point.xn.size()-1]-0.5) && (robotCoord.x <= set_point.xn[set_point.xn.size()-1]+0.5) &&
                     (robotCoord.y >= set_point.yn[set_point.yn.size()-1]-0.5) && (robotCoord.y <= set_point.yn[set_point.yn.size()-1]+0.5)){
                     set_point.xn.pop_back();
                     set_point.yn.pop_back();
-                    zone_corner_left.x = -1;
-                    zone_corner_left.y = -1;
-                    zone_corner_right.x = -1;
-                    zone_corner_right.y = -1;
                 }
             }
             if(!tempSetPoint.xn.empty()){
