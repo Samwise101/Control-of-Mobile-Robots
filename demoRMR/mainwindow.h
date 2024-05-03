@@ -82,10 +82,10 @@ public:
 
     void set_robot_connect_data();
 
-    void get_laserdata_and_write_to_map(double robotX, double robotY, double robotA, double setX, double setY);
+    void get_laserdata_and_write_to_map( double robotX,  double robotY,  double robotA, const double setX, const double setY, const int sign=1);
 
-    bool checkAccessibility(double xp, double yp);
-    double calculateDistance(double& xp, double& yp, double& setX, double& setY, double& robotX, double& robotY);
+    bool checkAccessibility(const double xp, const double yp, const double robotX, const double robotY, const int sign);
+    double calculateDistance(const double xp, const double yp, const double setX, const double setY, const double robotX, const double robotY);
 
     int processThisCamera(cv::Mat cameraData);
 
@@ -136,6 +136,9 @@ private:
     bool obstacle_detected;
 
     int controlType;
+    double startX;
+    double startY;
+    double startA;
 
     std::function<void()> f;
 

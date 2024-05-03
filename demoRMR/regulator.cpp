@@ -18,17 +18,6 @@ void Regulator::robot_movement_reg(const double& setX, const double& setY, const
     double ey = sign*(setY - robotCoord.y)*1000.0;
     double eDist = sqrt(ex*ex + ey*ey);
 
-    if(goToWall){
-        eDist -= 350;
-        if(eDist < 0){
-            robot_motion_param.rot_speed = 0.0;
-            robot_motion_param.trans_speed = 0.0;
-            return;
-        }
-    }
-
-    std::cout << "eDist = " << eDist << std::endl;
-
     treshHold = treshHold*1000.0;
 
     double eRot = std::atan2(ey,ex) - robotCoord.a*TO_RADIANS;
@@ -47,8 +36,8 @@ void Regulator::robot_movement_reg(const double& setX, const double& setY, const
         if(old_speed < robot_motion_param.trans_speed){
             robot_motion_param.trans_speed = old_speed + 1.5;
         }
-        if(robot_motion_param.trans_speed > 300.0){
-            robot_motion_param.trans_speed = 300.0;
+        if(robot_motion_param.trans_speed > max_speed){
+            robot_motion_param.trans_speed = max_speed;
         }
         old_speed = robot_motion_param.trans_speed;
     }
