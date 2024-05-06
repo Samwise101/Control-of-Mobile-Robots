@@ -33,11 +33,8 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX,  double robotY,  
         //    return;
     }
 
-    std::cout << "Robot X= " << robotX << " , Y=" << robotY << " , Angle=" << robotA  << std::endl;
-    std::cout << "Set X= " << setX << " , Set Y=" << setY << std::endl;
-
     double angle_threshold = std::atan2(0.25, eDist);
-    double distance_threshold = 2.0;
+    double distance_threshold = 3.0;
 
     double leftThreshold = eRot + angle_threshold;
     double rightThreshold = eRot - angle_threshold;
@@ -242,7 +239,7 @@ void MainWindow::get_laserdata_and_write_to_map(double robotX,  double robotY,  
     double xpLeft{};
     double ypLeft{};
 
-    double robotoffset = 0.3;
+    double robotoffset = 0.325;
 
     if(leftCornerDetected){
         double angle_offset = asin(robotoffset/leftCornerDist);

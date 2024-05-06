@@ -33,7 +33,7 @@ private:
     double old_speed;
     double old_rot_speed;
 
-    double max_speed = 250.0;
+    double max_speed = 450.0;
 };
 
 #endif // REGULATOR_H
